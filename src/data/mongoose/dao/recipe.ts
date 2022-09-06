@@ -1,8 +1,18 @@
 import mongoose from "mongoose";
-import { Recipe } from "../../../types/recipe";
-import { assertConforms, todo } from "../../../utils/assertions";
+import { Recipe, RecipeWithoutIngredients } from "../../../types/recipe";
+import { assertConforms } from "../../../utils/assertions";
 import { RecipeDao } from "../../dao/recipe";
 import { getRecipeModel, RecipeClass } from "../schema/recipe";
+
+const mongoRecipeToRecipeDtoWithoutIngredients = (
+  mongooseRecipe: RecipeClass
+): RecipeWithoutIngredients =>
+  assertConforms(RecipeWithoutIngredients, {
+    id: mongooseRecipe._id.toString(),
+    name: mongooseRecipe.name,
+    description: mongooseRecipe.description,
+    tags: mongooseRecipe.tags,
+  });
 
 const mongoRecipeToRecipeDto = (mongooseRecipe: RecipeClass): Recipe =>
   assertConforms(Recipe, {
@@ -52,16 +62,28 @@ export const makeMongooseRecipeDao = (
       };
     },
     findById: async (id) => {
-      return todo(id);
+      const result = await RecipeModel.findById(id).lean();
+      if (result !== null) {
+        return mongoRecipeToRecipeDto(result);
+      } else {
+        return null;
+      }
     },
     findByIdWithoutIngredients: async (id) => {
-      return todo(id);
+      const result = await RecipeModel.findById(id, {
+        ingredients: false,
+      }).lean();
+      if (result !== null) {
+        return mongoRecipeToRecipeDtoWithoutIngredients(result);
+      } else {
+        return null;
+      }
     },
     update: async (id, recipe) => {
-      return todo(id, recipe);
+      await RecipeModel.findByIdAndUpdate(id, recipe);
     },
     delete: async (id) => {
-      return todo(id);
+      await RecipeModel.findByIdAndDelete(id);
     },
   };
 };
