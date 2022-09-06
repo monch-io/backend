@@ -10,9 +10,9 @@
     "start": "node build/index.js",
     "build": "tsc",
     "watch": "nodemon src/index.ts",
-    "fmt": "prettier --write src",
-    "lint": "eslint src",
-    "pr": "yarn fmt && yarn lint && yarn build"
+    "fmt": "prettier --write \"./src/**/*.ts\"",
+    "check-fmt": "prettier --check \"./src/**/*.ts\"",
+    "lint": "eslint src"
   },
   "devDependencies": {
     "@types/node": "^18.7.15",
