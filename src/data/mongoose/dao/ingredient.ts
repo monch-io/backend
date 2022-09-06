@@ -7,5 +7,6 @@ export const makeMongooseIngredientDao = (
   connection: mongoose.Connection
 ): IngredientDao => {
   const IngredientModel = getIngredientModel(connection);
+
   return todo(IngredientModel);
 };

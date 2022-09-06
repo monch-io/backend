@@ -1,8 +1,14 @@
-import { getModelForClass, prop } from "@typegoose/typegoose";
+import { getModelForClass, index, prop } from "@typegoose/typegoose";
 import mongoose from "mongoose";
 import { QuantifiedIngredientClass } from "./quantified-ingredient";
+import { WithId } from "./with-id";
 
-export class RecipeClass {
+@index({
+  name: "text",
+  description: "text",
+  tags: "text",
+})
+export class RecipeClass extends WithId {
   @prop({ required: true })
   name!: string;
 
@@ -10,10 +16,10 @@ export class RecipeClass {
   description?: string;
 
   @prop({ type: String, required: true })
-  tags!: mongoose.Types.Array<string>;
+  tags!: string[];
 
   @prop({ type: QuantifiedIngredientClass, required: true })
-  ingredients!: mongoose.Types.Array<QuantifiedIngredientClass>;
+  ingredients!: QuantifiedIngredientClass[];
 }
 
 export const getRecipeModel = (existingConnection: mongoose.Connection) =>

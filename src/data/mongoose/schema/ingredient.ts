@@ -1,7 +1,11 @@
-import { getModelForClass, prop } from "@typegoose/typegoose";
+import { getModelForClass, index, prop } from "@typegoose/typegoose";
 import mongoose from "mongoose";
+import { WithId } from "./with-id";
 
-export class IngredientClass {
+@index({
+  name: "text",
+})
+export class IngredientClass extends WithId {
   @prop({ required: true })
   name!: string;
 

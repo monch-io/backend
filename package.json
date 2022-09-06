@@ -7,7 +7,7 @@
   "author": "The monch.io authors",
   "license": "MIT",
   "scripts": {
-    "start": "node build/index.js",
+    "start": "node build/init.js",
     "build": "tsc",
     "watch": "nodemon src/index.ts",
     "fmt": "prettier --write \"./src/**/*.ts\"",

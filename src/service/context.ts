@@ -1,3 +1,9 @@
-export interface Context {}
+import { Daos } from "../data/dao/all";
 
-export const createContext = (): Context => ({});
+export interface GlobalContext {
+  daos: Daos;
+}
+
+export interface RequestContext {}
+
+export interface Context extends GlobalContext, RequestContext {}
