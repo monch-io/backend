@@ -5,6 +5,8 @@ import { z } from "zod";
 export const Config = z.object({
   // What port to run the API on
   PORT: z.number().positive().int(),
+  // The MongoDB connection string
+  MONGO_DB_URI: z.string(),
 });
 export interface Config extends z.infer<typeof Config> {}
 

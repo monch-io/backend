@@ -2,7 +2,7 @@
   "name": "monch-backend",
   "version": "1.0.0",
   "description": "The monch.io backend",
-  "main": "build/index.js",
+  "main": "build/init.js",
   "repository": "git@github.com:monch-io/backend.git",
   "author": "The monch.io authors",
   "license": "MIT",
@@ -15,6 +15,8 @@
     "lint": "eslint src"
   },
   "devDependencies": {
+    "@types/express": "^4.17.13",
+    "@types/mongoose": "^5.11.97",
     "@types/node": "^18.7.15",
     "@typescript-eslint/eslint-plugin": "^5.36.2",
     "@typescript-eslint/parser": "^5.36.2",
@@ -26,8 +28,7 @@
   },
   "dependencies": {
     "@trpc/server": "^9.27.2",
-    "@types/express": "^4.17.13",
-    "@types/mongoose": "^5.11.97",
+    "@typegoose/typegoose": "^9.11.2",
     "dotenv": "^16.0.2",
     "express": "^4.18.1",
     "mongoose": "^6.5.4",
