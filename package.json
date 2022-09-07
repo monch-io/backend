@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "The monch.io backend",
   "main": "build/init.js",
+  "files": [
+    "./build"
+  ],
   "repository": "git@github.com:monch-io/backend.git",
   "author": "The monch.io authors",
   "license": "MIT",
