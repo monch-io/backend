@@ -12,11 +12,12 @@
   "scripts": {
     "start": "node build/init.js",
     "build": "tsc",
+    "check": "tsc --noEmit",
     "watch": "nodemon src/index.ts",
     "fmt": "prettier --write \"./src/**/*.ts\"",
     "check-fmt": "prettier --check \"./src/**/*.ts\"",
     "lint": "eslint src",
-    "pr": "yarn fmt && yarn lint && yarn build",
+    "pr": "yarn fmt && yarn lint && yarn check",
     "prepare": "yarn build"
   },
   "devDependencies": {
