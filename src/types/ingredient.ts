@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { QuantityType } from "./quantity-type";
+import { Dimension } from "./unit";
 
 export const Ingredient = z.object({
   id: z.string(),
   name: z.string().min(1),
-  quantityType: QuantityType,
+  dimension: Dimension,
 });
 export interface Ingredient extends z.infer<typeof Ingredient> {}
 

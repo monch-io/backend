@@ -1,5 +1,6 @@
 import { prop, Ref } from "@typegoose/typegoose";
 import mongoose from "mongoose";
+import { Quantity } from "../../../types/quantity";
 import { IngredientClass } from "./ingredient";
 
 export class QuantifiedIngredientClass {
@@ -7,8 +8,5 @@ export class QuantifiedIngredientClass {
   ingredientId!: Ref<IngredientClass, mongoose.Types.ObjectId>;
 
   @prop({ required: true })
-  quantity!: number;
-
-  @prop({ required: true })
-  unit!: string;
+  quantity!: Quantity;
 }

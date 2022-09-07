@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { PaginatedResult, Pagination } from "../../../types/pagination";
-import { Unit } from "../../../types/quantity-type";
+import { Unit } from "../../../types/unit";
 import {
   CreateRecipe,
   Recipe,
@@ -30,10 +30,25 @@ const mongoRecipeToRecipeDto = (mongooseRecipe: RecipeClass): Recipe =>
     tags: mongooseRecipe.tags,
     ingredients: mongooseRecipe.ingredients.map((quantifiedIngredient) => ({
       ingredientId: quantifiedIngredient.ingredientId.toString(),
-      quantity: quantifiedIngredient.quantity,
-      unit: quantifiedIngredient.unit as Unit,
+      quantity: {
+        value: quantifiedIngredient.quantity.value,
+        unit: quantifiedIngredient.quantity.unit as Unit,
+      },
     })),
   });
+
+const recipeDtoToMongoCreateRecipe = (recipe: CreateRecipe) => ({
+  name: recipe.name,
+  description: recipe.description,
+  tags: recipe.tags,
+  ingredients: recipe.ingredients.map((quantifiedIngredient) => ({
+    ingredientId: quantifiedIngredient.ingredientId,
+    quantity: {
+      value: quantifiedIngredient.quantity.value,
+      unit: quantifiedIngredient.quantity.unit,
+    },
+  })),
+});
 
 export class RecipeDaoMongoose implements RecipeDao {
   constructor(
@@ -42,15 +57,9 @@ export class RecipeDaoMongoose implements RecipeDao {
   ) {}
 
   create = async (recipe: CreateRecipe): Promise<string> => {
-    const createdRecipe = await this.RecipeModel.create({
-      name: recipe.name,
-      description: recipe.description,
-      tags: recipe.tags,
-      ingredients: recipe.ingredients.map((quantifiedIngredient) => ({
-        ingredientId: quantifiedIngredient.ingredientId,
-        quantity: quantifiedIngredient.quantity,
-      })),
-    });
+    const createdRecipe = await this.RecipeModel.create(
+      recipeDtoToMongoCreateRecipe(recipe)
+    );
     return createdRecipe._id.toString();
   };
 
@@ -98,7 +107,10 @@ export class RecipeDaoMongoose implements RecipeDao {
   };
 
   update = async (id: string, recipe: UpdateRecipe): Promise<void> => {
-    await this.RecipeModel.findByIdAndUpdate(id, recipe);
+    await this.RecipeModel.findByIdAndUpdate(
+      id,
+      recipeDtoToMongoCreateRecipe(recipe)
+    );
   };
 
   delete = async (id: string): Promise<void> => {

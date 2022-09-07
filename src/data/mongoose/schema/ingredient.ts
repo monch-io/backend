@@ -10,7 +10,7 @@ export class IngredientClass extends WithId {
   name!: string;
 
   @prop({ required: true })
-  quantityType!: string;
+  dimension!: string;
 }
 
 export const getIngredientModel = (existingConnection: mongoose.Connection) =>
