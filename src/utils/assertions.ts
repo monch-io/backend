@@ -14,10 +14,10 @@ export const unreachable = () => {
 export const assertConforms = <T extends z.ZodTypeAny>(
   schema: T,
   value: z.infer<T>
-) => {
+): z.infer<T> => {
   const result = schema.safeParse(value);
   if (!result.success) {
     throw new Error(`Given value "${value}" does not conform to given schema`);
   }
-  return value;
+  return result.data;
 };

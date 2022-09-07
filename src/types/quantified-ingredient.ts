@@ -7,9 +7,13 @@ export const QuantifiedIngredient = z.object({
   quantity: z.number().positive(),
   unit: Unit,
 });
+export interface QuantifiedIngredient
+  extends z.infer<typeof QuantifiedIngredient> {}
 
 export const QuantifiedIngredientRef = z.object({
   ingredientId: z.string(),
   quantity: z.number().positive(),
   unit: Unit,
 });
+export interface QuantifiedIngredientRef
+  extends z.infer<typeof QuantifiedIngredientRef> {}
