@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { PaginatedResult, Pagination } from "../../../types/pagination";
+import { Unit } from "../../../types/quantity-type";
 import {
   CreateRecipe,
   Recipe,
@@ -30,6 +31,7 @@ const mongoRecipeToRecipeDto = (mongooseRecipe: RecipeClass): Recipe =>
     ingredients: mongooseRecipe.ingredients.map((quantifiedIngredient) => ({
       ingredientId: quantifiedIngredient.ingredientId.toString(),
       quantity: quantifiedIngredient.quantity,
+      unit: quantifiedIngredient.unit as Unit,
     })),
   });
 
@@ -58,7 +60,7 @@ export class RecipeDaoMongoose implements RecipeDao {
   ): Promise<PaginatedResult<Recipe>> => {
     const mongoQuery = {
       ...(query.text && { $text: { $search: query.text } }),
-      tags: { $in: query.tags },
+      ...(query.tags && { tags: { $in: query.tags } }),
     };
 
     const items = await this.RecipeModel.find(mongoQuery)

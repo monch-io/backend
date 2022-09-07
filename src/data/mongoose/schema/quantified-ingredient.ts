@@ -8,4 +8,7 @@ export class QuantifiedIngredientClass {
 
   @prop({ required: true })
   quantity!: number;
+
+  @prop({ required: true })
+  unit!: string;
 }
