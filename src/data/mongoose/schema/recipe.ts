@@ -8,11 +8,20 @@ import mongoose from "mongoose";
 import { QuantifiedIngredientClass } from "./quantified-ingredient";
 import { WithId } from "./with-id";
 
-@index({
-  name: "text",
-  description: "text",
-  tags: "text",
-})
+@index(
+  {
+    name: "text",
+    description: "text",
+    tags: "text",
+  },
+  {
+    weights: {
+      name: 2,
+      description: 1,
+      tags: 3,
+    },
+  }
+)
 @modelOptions({ schemaOptions: { collection: "recipes" } })
 export class RecipeClass extends WithId {
   @prop({ required: true })
