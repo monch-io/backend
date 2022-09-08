@@ -13,7 +13,7 @@
     "start": "node build/init.js",
     "build": "tsc",
     "check": "tsc --noEmit",
-    "watch": "nodemon src/index.ts",
+    "watch": "nodemon src/init.ts",
     "fmt": "prettier --write \"./src/**/*.ts\"",
     "check-fmt": "prettier --check \"./src/**/*.ts\"",
     "lint": "eslint src",
