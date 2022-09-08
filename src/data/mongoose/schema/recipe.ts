@@ -13,7 +13,7 @@ import { WithId } from "./with-id";
   description: "text",
   tags: "text",
 })
-@modelOptions({ schemaOptions: { collection: "Recipe" } })
+@modelOptions({ schemaOptions: { collection: "recipes" } })
 export class RecipeClass extends WithId {
   @prop({ required: true })
   name!: string;

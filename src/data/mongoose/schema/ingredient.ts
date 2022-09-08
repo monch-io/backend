@@ -10,7 +10,7 @@ import { WithId } from "./with-id";
 @index({
   name: "text",
 })
-@modelOptions({ schemaOptions: { collection: "Ingredient" } })
+@modelOptions({ schemaOptions: { collection: "ingredients" } })
 export class IngredientClass extends WithId {
   @prop({ required: true })
   name!: string;

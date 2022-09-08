@@ -8,7 +8,7 @@ import mongoose from "mongoose";
 import { RecipeClass } from "./recipe";
 import { WithId } from "./with-id";
 
-@modelOptions({ schemaOptions: { collection: "Meal" } })
+@modelOptions({ schemaOptions: { collection: "meals" } })
 export class MealClass extends WithId {
   @prop({ required: true })
   date!: Date;
