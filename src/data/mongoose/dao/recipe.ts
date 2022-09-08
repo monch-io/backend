@@ -12,7 +12,7 @@ import { assertConforms } from "../../../utils/assertions";
 import { RecipeDao } from "../../dao/recipe";
 import { getRecipeModel, RecipeClass } from "../schema/recipe";
 
-const mongoRecipeToRecipeDtoWithoutIngredients = (
+const mongooseRecipeToRecipeDtoWithoutIngredients = (
   mongooseRecipe: RecipeClass
 ): RecipeWithoutIngredients =>
   assertConforms(RecipeWithoutIngredients, {
@@ -22,7 +22,7 @@ const mongoRecipeToRecipeDtoWithoutIngredients = (
     tags: mongooseRecipe.tags,
   });
 
-const mongoRecipeToRecipeDto = (mongooseRecipe: RecipeClass): Recipe =>
+const mongooseRecipeToRecipeDto = (mongooseRecipe: RecipeClass): Recipe =>
   assertConforms(Recipe, {
     id: mongooseRecipe._id.toString(),
     name: mongooseRecipe.name,
@@ -37,7 +37,7 @@ const mongoRecipeToRecipeDto = (mongooseRecipe: RecipeClass): Recipe =>
     })),
   });
 
-const recipeDtoToMongoCreateRecipe = (recipe: CreateRecipe) => ({
+const createRecipeDtoToMongooseCreateRecipe = (recipe: CreateRecipe) => ({
   name: recipe.name,
   description: recipe.description,
   tags: recipe.tags,
@@ -58,7 +58,7 @@ export class RecipeDaoMongoose implements RecipeDao {
 
   create = async (recipe: CreateRecipe): Promise<string> => {
     const createdRecipe = await this.RecipeModel.create(
-      recipeDtoToMongoCreateRecipe(recipe)
+      createRecipeDtoToMongooseCreateRecipe(recipe)
     );
     return createdRecipe._id.toString();
   };
@@ -79,7 +79,7 @@ export class RecipeDaoMongoose implements RecipeDao {
     const total = await this.RecipeModel.countDocuments(mongoQuery);
 
     return {
-      items: items.map(mongoRecipeToRecipeDto),
+      items: items.map(mongooseRecipeToRecipeDto),
       total,
     };
   };
@@ -87,7 +87,7 @@ export class RecipeDaoMongoose implements RecipeDao {
   findById = async (id: string): Promise<Recipe | null> => {
     const result = await this.RecipeModel.findById(id).lean();
     if (result !== null) {
-      return mongoRecipeToRecipeDto(result);
+      return mongooseRecipeToRecipeDto(result);
     } else {
       return null;
     }
@@ -100,7 +100,7 @@ export class RecipeDaoMongoose implements RecipeDao {
       ingredients: false,
     }).lean();
     if (result !== null) {
-      return mongoRecipeToRecipeDtoWithoutIngredients(result);
+      return mongooseRecipeToRecipeDtoWithoutIngredients(result);
     } else {
       return null;
     }
@@ -109,7 +109,7 @@ export class RecipeDaoMongoose implements RecipeDao {
   update = async (id: string, recipe: UpdateRecipe): Promise<void> => {
     await this.RecipeModel.findByIdAndUpdate(
       id,
-      recipeDtoToMongoCreateRecipe(recipe)
+      createRecipeDtoToMongooseCreateRecipe(recipe)
     );
   };
 
