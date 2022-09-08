@@ -1,8 +1,14 @@
-import { getModelForClass, prop, Ref } from "@typegoose/typegoose";
+import {
+  getModelForClass,
+  modelOptions,
+  prop,
+  Ref,
+} from "@typegoose/typegoose";
 import mongoose from "mongoose";
 import { RecipeClass } from "./recipe";
 import { WithId } from "./with-id";
 
+@modelOptions({ schemaOptions: { collection: "Meal" } })
 export class MealClass extends WithId {
   @prop({ required: true })
   date!: Date;

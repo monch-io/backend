@@ -1,10 +1,16 @@
-import { getModelForClass, index, prop } from "@typegoose/typegoose";
+import {
+  getModelForClass,
+  index,
+  modelOptions,
+  prop,
+} from "@typegoose/typegoose";
 import mongoose from "mongoose";
 import { WithId } from "./with-id";
 
 @index({
   name: "text",
 })
+@modelOptions({ schemaOptions: { collection: "Ingredient" } })
 export class IngredientClass extends WithId {
   @prop({ required: true })
   name!: string;
