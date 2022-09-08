@@ -4,6 +4,8 @@ import { GlobalContext } from "./context";
 import { appRouter } from "./router";
 import { CONFIG } from "../utils/config";
 import { LOG } from "../utils/log";
+import cors from "cors";
+import helmet from "helmet";
 import * as trpcPlayground from "trpc-playground/handlers/express";
 
 const API_ENDPOINT = "/api";
@@ -14,6 +16,9 @@ export const startService = async (
   globalContext: GlobalContext
 ): Promise<void> => {
   const app = express();
+
+  app.use(cors());
+  app.use(helmet());
 
   app.use(
     API_ENDPOINT,

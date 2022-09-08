@@ -3,7 +3,6 @@ import { z } from "zod";
 import { CreateMeal, Meal } from "../../types/meal";
 import { MealSearchQuery } from "../../types/meal-search-query";
 import { PaginatedResult, Pagination } from "../../types/pagination";
-import { todo } from "../../utils/assertions";
 import { Context } from "../context";
 
 export const mealsRouter = trpc
@@ -11,7 +10,14 @@ export const mealsRouter = trpc
   .mutation("create", {
     input: CreateMeal,
     output: z.string(),
-    resolve: () => todo(),
+    resolve: async ({
+      input,
+      ctx: {
+        daos: { mealDao },
+      },
+    }) => {
+      return await mealDao.create(input);
+    },
   })
   .query("search", {
     input: z.object({
@@ -19,17 +25,38 @@ export const mealsRouter = trpc
       pagination: Pagination,
     }),
     output: PaginatedResult(Meal),
-    resolve: () => todo(),
+    resolve: async ({
+      input,
+      ctx: {
+        daos: { mealDao },
+      },
+    }) => {
+      return await mealDao.search(input.query, input.pagination);
+    },
   })
   .query("findById", {
     input: z.object({
       id: z.string(),
     }),
     output: Meal.nullable(),
-    resolve: () => todo(),
+    resolve: async ({
+      input,
+      ctx: {
+        daos: { mealDao },
+      },
+    }) => {
+      return await mealDao.findById(input.id);
+    },
   })
   .mutation("delete", {
     input: z.object({ id: z.string() }),
     output: z.void(),
-    resolve: () => todo(),
+    resolve: async ({
+      input,
+      ctx: {
+        daos: { mealDao },
+      },
+    }) => {
+      return await mealDao.delete(input.id);
+    },
   });
