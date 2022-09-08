@@ -1,19 +1,17 @@
 import { z } from "zod";
 import { Ingredient } from "./ingredient";
-import { Unit } from "./quantity-type";
+import { Quantity } from "./quantity";
 
 export const QuantifiedIngredient = z.object({
   ingredient: Ingredient,
-  quantity: z.number().positive(),
-  unit: Unit,
+  quantity: Quantity,
 });
 export interface QuantifiedIngredient
   extends z.infer<typeof QuantifiedIngredient> {}
 
 export const QuantifiedIngredientRef = z.object({
   ingredientId: z.string(),
-  quantity: z.number().positive(),
-  unit: Unit,
+  quantity: Quantity,
 });
 export interface QuantifiedIngredientRef
   extends z.infer<typeof QuantifiedIngredientRef> {}

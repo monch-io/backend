@@ -9,7 +9,6 @@ import {
 } from "../../types/recipe";
 import { PaginatedResult } from "../../types/pagination";
 import { RecipeSearchQuery } from "../../types/recipe-search-query";
-import { todo } from "../../utils/assertions";
 import { Context } from "../context";
 
 export const recipesRouter = trpc
@@ -17,7 +16,14 @@ export const recipesRouter = trpc
   .mutation("create", {
     input: CreateRecipe,
     output: z.string(),
-    resolve: () => todo(),
+    resolve: async ({
+      input,
+      ctx: {
+        daos: { recipeDao },
+      },
+    }) => {
+      return await recipeDao.create(input);
+    },
   })
   .query("search", {
     input: z.object({
@@ -25,29 +31,64 @@ export const recipesRouter = trpc
       pagination: Pagination,
     }),
     output: PaginatedResult(RecipeWithoutIngredients),
-    resolve: () => todo(),
+    resolve: async ({
+      input,
+      ctx: {
+        daos: { recipeDao },
+      },
+    }) => {
+      return await recipeDao.search(input.query, input.pagination);
+    },
   })
   .query("findById", {
     input: z.object({
       id: z.string(),
     }),
     output: Recipe.nullable(),
-    resolve: () => todo(),
+    resolve: async ({
+      input,
+      ctx: {
+        daos: { recipeDao },
+      },
+    }) => {
+      return await recipeDao.findById(input.id);
+    },
   })
   .query("findByIdWithoutIngredients", {
     input: z.object({
       id: z.string(),
     }),
     output: RecipeWithoutIngredients.nullable(),
-    resolve: () => todo(),
+    resolve: async ({
+      input,
+      ctx: {
+        daos: { recipeDao },
+      },
+    }) => {
+      return await recipeDao.findByIdWithoutIngredients(input.id);
+    },
   })
   .mutation("update", {
-    input: UpdateRecipe,
+    input: z.object({ id: z.string(), data: UpdateRecipe }),
     output: z.void(),
-    resolve: () => todo(),
+    resolve: async ({
+      input,
+      ctx: {
+        daos: { recipeDao },
+      },
+    }) => {
+      return await recipeDao.update(input.id, input.data);
+    },
   })
   .mutation("delete", {
     input: z.object({ id: z.string() }),
     output: z.void(),
-    resolve: () => todo(),
+    resolve: async ({
+      input,
+      ctx: {
+        daos: { recipeDao },
+      },
+    }) => {
+      return await recipeDao.delete(input.id);
+    },
   });
