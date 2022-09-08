@@ -17,8 +17,21 @@ export const startService = async (
 ): Promise<void> => {
   const app = express();
 
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+    })
+  );
   app.use(cors());
-  app.use(helmet());
+
+  app.use(
+    API_PLAYGROUND_ENDPOINT,
+    await trpcPlayground.expressHandler({
+      trpcApiEndpoint: API_ENDPOINT,
+      playgroundEndpoint: API_PLAYGROUND_ENDPOINT,
+      router: appRouter,
+    })
+  );
 
   app.use(
     API_ENDPOINT,
@@ -28,15 +41,6 @@ export const startService = async (
       onError: ({ error }) => {
         LOG.error(error);
       },
-    })
-  );
-
-  app.use(
-    API_PLAYGROUND_ENDPOINT,
-    await trpcPlayground.expressHandler({
-      trpcApiEndpoint: API_ENDPOINT,
-      playgroundEndpoint: API_PLAYGROUND_ENDPOINT,
-      router: appRouter,
     })
   );
 
