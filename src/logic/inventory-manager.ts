@@ -9,7 +9,6 @@ import { InventoryEntry } from "../types/inventory-entry";
 import { INFINITE_PAGINATION, PaginatedResult } from "../types/pagination";
 import { QuantifiedIngredientRef } from "../types/quantified-ingredient";
 import { Unit } from "../types/unit";
-import { todo } from "../utils/assertions";
 import { BadRequestException, NotFoundException } from "../utils/exceptions";
 import { LOG } from "../utils/log";
 
@@ -17,6 +16,7 @@ type InventoryEntryOptionalId = Omit<InventoryEntry, "id"> & {
   id?: string | undefined;
 };
 
+// Contains functionality to interact with the inventory system.
 export class InventoryManager {
   constructor(
     private readonly ingredientDao: IngredientDao,
@@ -24,6 +24,7 @@ export class InventoryManager {
     private readonly inventoryEntryDao: InventoryEntryDao
   ) {}
 
+  // Get the current inventory, which is for each ingredient
   getInventory = async (): Promise<Inventory> => {
     const entriesByIngredientId = new Map();
     const inventoryEntries = await this.inventoryEntryDao.search(
@@ -43,6 +44,7 @@ export class InventoryManager {
     return { entriesByIngredientId };
   };
 
+  // Get the quantity of a specific ingredient in the inventory
   getQuantityForIngredient = async (
     ingredientId: string
   ): Promise<QuantifiedIngredientRef> => {
@@ -65,10 +67,49 @@ export class InventoryManager {
     return ingredientQuantity.data;
   };
 
+  // Update the quantity of a specific ingredient in the inventory.
+  //
+  // The quantity differences will be added/subtracted.
+  updateInventory = async (
+    changes: QuantifiedIngredientRef[]
+  ): Promise<void> => {
+    return await this.updateInventoryInMode(changes, "relative");
+  };
+
+  // Set the quantity of a series of ingredients in the inventory
+  //
+  // The quantities will be set to the provided values.
   setQuantityForIngredients = async (
     changes: QuantifiedIngredientRef[]
   ): Promise<void> => {
-    return todo(changes);
+    return await this.updateInventoryInMode(changes, "absolute");
+  };
+
+  // Get the history of the current inventory in the form of inventory change entries.
+  getInventoryHistory = async (
+    ingredientIds?: string[],
+    dateRange?: DateRange
+  ): Promise<PaginatedResult<InventoryChange>> => {
+    return await this.inventoryChangeDao.search({ ingredientIds, dateRange });
+  };
+
+  private updateInventoryInMode = async (
+    changes: QuantifiedIngredientRef[],
+    mode: "absolute" | "relative"
+  ): Promise<void> => {
+    // Get all the ingredient inventory indexed by ID
+    const inventoryByIngredientId =
+      await this.mapIngredientIdsToInventoryEntries(
+        changes.map(({ ingredientId }) => ingredientId)
+      );
+
+    // Apply all the changes to the map
+    for (const change of changes) {
+      this.updateInventoryInMapForChange(inventoryByIngredientId, change, mode);
+    }
+
+    // Set changes in mongo for inventory and inventory changes
+    await this.applyInventoryChangesToDb(changes, inventoryByIngredientId);
   };
 
   private mapIngredientIdsToInventoryEntries = async (
@@ -99,7 +140,8 @@ export class InventoryManager {
 
   private updateInventoryInMapForChange = (
     inventoryByIngredientId: Map<string, InventoryEntryOptionalId>,
-    change: QuantifiedIngredientRef
+    change: QuantifiedIngredientRef,
+    changeMode: "absolute" | "relative"
   ) => {
     const cannotLower = (ingredientId: string) =>
       new BadRequestException(
@@ -153,7 +195,10 @@ export class InventoryManager {
     }
 
     // Ensure new quantity is positive
-    const newQuantity = data.quantity.value + change.quantity.value;
+    const newQuantity =
+      changeMode === "relative"
+        ? data.quantity.value + change.quantity.value
+        : change.quantity.value;
     const newUnit = data.quantity.unit ?? change.quantity.unit;
     if (newQuantity < 0) {
       throw cannotLower(change.ingredientId);
@@ -179,22 +224,10 @@ export class InventoryManager {
     });
   };
 
-  updateInventory = async (
-    changes: QuantifiedIngredientRef[]
+  private applyInventoryChangesToDb = async (
+    changes: QuantifiedIngredientRef[],
+    inventoryByIngredientId: Map<string, InventoryEntryOptionalId>
   ): Promise<void> => {
-    // Get all the ingredient inventory indexed by ID
-    const inventoryByIngredientId =
-      await this.mapIngredientIdsToInventoryEntries(
-        changes.map(({ ingredientId }) => ingredientId)
-      );
-
-    // Apply all the changes to the map
-    for (const change of changes) {
-      this.updateInventoryInMapForChange(inventoryByIngredientId, change);
-    }
-
-    // Set changes in mongo for inventory and inventory changes
-    //
     // @@Todo: transaction
     await this.inventoryChangeDao.createMany(
       changes.map((change) => ({ change, timestamp: new Date() }))
@@ -212,12 +245,5 @@ export class InventoryManager {
         );
       }
     }
-  };
-
-  getInventoryHistory = async (
-    ingredientIds?: string[],
-    dateRange?: DateRange
-  ): Promise<PaginatedResult<InventoryChange>> => {
-    return await this.inventoryChangeDao.search({ ingredientIds, dateRange });
   };
 }
