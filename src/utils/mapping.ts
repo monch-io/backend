@@ -2,7 +2,7 @@ export const mapUndefined = <T, U>(
   value: T | undefined,
   f: (value: T) => U
 ): U | undefined => {
-  if (typeof value == "undefined") {
+  if (typeof value === "undefined") {
     return undefined;
   }
   return f(value);

@@ -34,7 +34,7 @@ const createInventoryEntryDtoToMongooseCreateInventoryEntry = (
 ) => ({
   ingredientId: createInventoryEntryDto.ingredientId.toString(),
   quantity: {
-    unit: createInventoryEntryDto.quantity.unit as Unit,
+    unit: createInventoryEntryDto.quantity.unit,
     value: createInventoryEntryDto.quantity.value,
   },
 });
