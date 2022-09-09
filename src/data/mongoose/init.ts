@@ -3,6 +3,7 @@ import { CONFIG } from "../../utils/config";
 import { LOG } from "../../utils/log";
 import { Daos } from "../dao/all";
 import { IngredientDaoMongoose } from "./dao/ingredient";
+import { InventoryEntryDaoMongoose } from "./dao/inventory-entry";
 import { MealDaoMongoose } from "./dao/meal";
 import { RecipeDaoMongoose } from "./dao/recipe";
 
@@ -13,5 +14,6 @@ export const setupDaosWithMongoose = async (): Promise<Daos> => {
     recipeDao: new RecipeDaoMongoose(connection),
     ingredientDao: new IngredientDaoMongoose(connection),
     mealDao: new MealDaoMongoose(connection),
+    inventoryEntryDao: new InventoryEntryDaoMongoose(connection),
   };
 };

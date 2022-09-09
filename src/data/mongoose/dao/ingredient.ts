@@ -4,8 +4,10 @@ import { IngredientSearchQuery } from "../../../types/ingredient-search-query";
 import { Pagination, PaginatedResult } from "../../../types/pagination";
 import { Dimension } from "../../../types/unit";
 import { assertConforms } from "../../../utils/assertions";
+import { mapNull } from "../../../utils/mapping";
 import { IngredientDao } from "../../dao/ingredient";
 import { getIngredientModel, IngredientClass } from "../schema/ingredient";
+import { DaoHelper } from "./dao-helper";
 
 const mongooseIngredientToIngredientDto = (
   mongooseIngredient: IngredientClass
@@ -26,6 +28,7 @@ const createIngredientDtoToMongooseCreateIngredient = (
 export class IngredientDaoMongoose implements IngredientDao {
   constructor(
     connection: mongoose.Connection,
+    private readonly daoHelper = new DaoHelper(),
     private readonly IngredientModel = getIngredientModel(connection)
   ) {}
 
@@ -37,32 +40,23 @@ export class IngredientDaoMongoose implements IngredientDao {
   };
 
   search = async (
-    query: IngredientSearchQuery,
-    pagination: Pagination
+    query?: IngredientSearchQuery,
+    pagination?: Pagination
   ): Promise<PaginatedResult<Ingredient>> => {
     const mongoQuery = {
-      ...(query.text && { $text: { $search: query.text } }),
+      ...(query?.text && { $text: { $search: query.text } }),
     };
 
-    const items = await this.IngredientModel.find(mongoQuery)
-      .skip(pagination.skip)
-      .limit(pagination.take)
-      .lean();
-    const total = await this.IngredientModel.countDocuments(mongoQuery);
-
-    return {
-      items: items.map(mongooseIngredientToIngredientDto),
-      total,
-    };
+    return await this.daoHelper.paginateQuery({
+      query: this.IngredientModel.find(mongoQuery),
+      pagination,
+      mapResult: mongooseIngredientToIngredientDto,
+    });
   };
 
   findById = async (id: string): Promise<Ingredient | null> => {
     const result = await this.IngredientModel.findById(id).lean();
-    if (result !== null) {
-      return mongooseIngredientToIngredientDto(result);
-    } else {
-      return null;
-    }
+    return mapNull(result, mongooseIngredientToIngredientDto);
   };
 
   delete = async (id: string): Promise<void> => {

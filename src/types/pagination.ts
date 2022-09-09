@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 export const Pagination = z.object({
-  skip: z.number().int().min(0).default(0),
-  take: z.number().int().min(1).default(10),
+  skip: z.number().int().min(0),
+  take: z.number().int().min(1),
 });
 export interface Pagination extends z.infer<typeof Pagination> {}
 
