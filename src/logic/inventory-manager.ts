@@ -48,11 +48,8 @@ export class InventoryManager {
   getQuantityForIngredient = async (
     ingredientId: string
   ): Promise<QuantifiedIngredientRef> => {
-    if ((await this.ingredientDao.findById(ingredientId)) === null) {
-      throw new NotFoundException(
-        `Ingredient with id ${ingredientId} not found.`
-      );
-    }
+    await this.ensureIngredientExists(ingredientId);
+
     const ingredientQuantity = await this.inventoryEntryDao.findByIngredientId(
       ingredientId
     );
@@ -98,10 +95,9 @@ export class InventoryManager {
     mode: "absolute" | "relative"
   ): Promise<void> => {
     // Get all the ingredient inventory indexed by ID
-    const inventoryByIngredientId =
-      await this.mapIngredientIdsToInventoryEntries(
-        changes.map(({ ingredientId }) => ingredientId)
-      );
+    const inventoryByIngredientId = await this.fetchInventoryByIngredientIds(
+      changes.map(({ ingredientId }) => ingredientId)
+    );
 
     // Apply all the changes to the map
     for (const change of changes) {
@@ -112,11 +108,12 @@ export class InventoryManager {
     await this.applyInventoryChangesToDb(changes, inventoryByIngredientId);
   };
 
-  private mapIngredientIdsToInventoryEntries = async (
+  private fetchInventoryByIngredientIds = async (
     ingredientIds: string[]
   ): Promise<Map<string, InventoryEntryOptionalId>> => {
     return await Promise.all(
       ingredientIds.map(async (ingredientId) => {
+        await this.ensureIngredientExists(ingredientId);
         const inventoryEntry = await this.inventoryEntryDao.findByIngredientId(
           ingredientId
         );
@@ -244,6 +241,16 @@ export class InventoryManager {
           inventoryEntry.data
         );
       }
+    }
+  };
+
+  private ensureIngredientExists = async (
+    ingredientId: string
+  ): Promise<void> => {
+    if ((await this.ingredientDao.findById(ingredientId)) === null) {
+      throw new NotFoundException(
+        `Ingredient with id ${ingredientId} not found.`
+      );
     }
   };
 }
