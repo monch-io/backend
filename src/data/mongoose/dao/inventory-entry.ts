@@ -2,6 +2,7 @@ import { assertConforms } from "../../../utils/assertions";
 import {
   CreateInventoryEntry,
   InventoryEntry,
+  UpdateInventoryEntry,
 } from "../../../types/inventory-entry";
 import { InventoryEntrySearchQuery } from "../../../types/inventory-entry-search-query";
 import { PaginatedResult, Pagination } from "../../../types/pagination";
@@ -52,6 +53,7 @@ export class InventoryEntryDaoMongoose implements InventoryEntryDao {
     );
     return createdInventoryEntry._id.toString();
   };
+
   search = (
     query?: InventoryEntrySearchQuery,
     pagination?: Pagination
@@ -68,10 +70,33 @@ export class InventoryEntryDaoMongoose implements InventoryEntryDao {
       mapResult: mongooseInventoryEntryToInventoryEntryDto,
     });
   };
+
   findById = async (id: string): Promise<InventoryEntry | null> => {
     const result = await this.InventoryEntryModel.findById(id).lean();
     return mapNull(result, mongooseInventoryEntryToInventoryEntryDto);
   };
+
+  findByIngredientId = async (
+    ingredientId: string
+  ): Promise<InventoryEntry | null> => {
+    const result = await this.InventoryEntryModel.findOne({
+      data: { ingredientId },
+    }).lean();
+    return mapNull(result, mongooseInventoryEntryToInventoryEntryDto);
+  };
+
+  updateById = async (
+    id: string,
+    data: UpdateInventoryEntry
+  ): Promise<void> => {
+    await this.InventoryEntryModel.updateOne(
+      {
+        _id: id,
+      },
+      createInventoryEntryDtoToMongooseCreateInventoryEntry(data)
+    );
+  };
+
   delete = async (id: string): Promise<void> => {
     await this.InventoryEntryModel.findByIdAndDelete(id);
   };

@@ -56,6 +56,14 @@ export class InventoryChangeDaoMongoose implements InventoryChangeDao {
     );
     return createdInventoryChange._id.toString();
   };
+
+  createMany = async (data: CreateInventoryChange[]): Promise<string[]> => {
+    const createdInventoryChange = await this.InventoryChangeModel.create(
+      data.map(createInventoryChangeDtoToMongooseCreateInventoryChange)
+    );
+    return createdInventoryChange.map(({ _id }) => _id.toString());
+  };
+
   search = (
     query?: InventoryChangeSearchQuery,
     pagination?: Pagination
