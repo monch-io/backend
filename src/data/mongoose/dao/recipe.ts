@@ -11,6 +11,8 @@ import { RecipeSearchQuery } from "../../../types/recipe-search-query";
 import { assertConforms } from "../../../utils/assertions";
 import { RecipeDao } from "../../dao/recipe";
 import { getRecipeModel, RecipeClass } from "../schema/recipe";
+import { DaoHelper } from "./dao-helper";
+import { mapNull } from "../../../utils/mapping";
 
 const mongooseRecipeToRecipeDtoWithoutIngredients = (
   mongooseRecipe: RecipeClass
@@ -53,6 +55,7 @@ const createRecipeDtoToMongooseCreateRecipe = (recipe: CreateRecipe) => ({
 export class RecipeDaoMongoose implements RecipeDao {
   constructor(
     connection: mongoose.Connection,
+    private readonly daoHelper = new DaoHelper(),
     private readonly RecipeModel = getRecipeModel(connection)
   ) {}
 
@@ -64,33 +67,24 @@ export class RecipeDaoMongoose implements RecipeDao {
   };
 
   search = async (
-    query: RecipeSearchQuery,
-    pagination: Pagination
+    query?: RecipeSearchQuery,
+    pagination?: Pagination
   ): Promise<PaginatedResult<Recipe>> => {
     const mongoQuery = {
-      ...(query.text && { $text: { $search: query.text } }),
-      ...(query.tags && { tags: { $in: query.tags } }),
+      ...(query?.text && { $text: { $search: query.text } }),
+      ...(query?.tags && { tags: { $in: query.tags } }),
     };
 
-    const items = await this.RecipeModel.find(mongoQuery)
-      .skip(pagination.skip)
-      .limit(pagination.take)
-      .lean();
-    const total = await this.RecipeModel.countDocuments(mongoQuery);
-
-    return {
-      items: items.map(mongooseRecipeToRecipeDto),
-      total,
-    };
+    return await this.daoHelper.paginateQuery({
+      query: this.RecipeModel.find(mongoQuery),
+      pagination,
+      mapResult: mongooseRecipeToRecipeDto,
+    });
   };
 
   findById = async (id: string): Promise<Recipe | null> => {
     const result = await this.RecipeModel.findById(id).lean();
-    if (result !== null) {
-      return mongooseRecipeToRecipeDto(result);
-    } else {
-      return null;
-    }
+    return mapNull(result, mongooseRecipeToRecipeDto);
   };
 
   findByIdWithoutIngredients = async (
@@ -99,11 +93,7 @@ export class RecipeDaoMongoose implements RecipeDao {
     const result = await this.RecipeModel.findById(id, {
       ingredients: false,
     }).lean();
-    if (result !== null) {
-      return mongooseRecipeToRecipeDtoWithoutIngredients(result);
-    } else {
-      return null;
-    }
+    return mapNull(result, mongooseRecipeToRecipeDtoWithoutIngredients);
   };
 
   update = async (id: string, recipe: UpdateRecipe): Promise<void> => {

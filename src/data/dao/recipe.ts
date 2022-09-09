@@ -11,8 +11,8 @@ export interface RecipeDao {
   create: (recipe: CreateRecipe) => Promise<string>;
 
   search: (
-    query: RecipeSearchQuery,
-    pagination: Pagination
+    query?: RecipeSearchQuery,
+    pagination?: Pagination
   ) => Promise<PaginatedResult<RecipeWithoutIngredients>>;
 
   findById: (id: string) => Promise<Recipe | null>;

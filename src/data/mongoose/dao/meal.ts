@@ -3,8 +3,10 @@ import { CreateMeal, Meal } from "../../../types/meal";
 import { MealSearchQuery } from "../../../types/meal-search-query";
 import { Pagination, PaginatedResult } from "../../../types/pagination";
 import { assertConforms } from "../../../utils/assertions";
+import { mapNull } from "../../../utils/mapping";
 import { MealDao } from "../../dao/meal";
 import { getMealModel, MealClass } from "../schema/meal";
+import { DaoHelper } from "./dao-helper";
 
 const mongooseMealToMealDto = (mongooseMeal: MealClass) =>
   assertConforms(Meal, {
@@ -21,6 +23,7 @@ const createMealDtoToMongooseCreateMeal = (meal: CreateMeal) => ({
 export class MealDaoMongoose implements MealDao {
   constructor(
     connection: mongoose.Connection,
+    private readonly daoHelper: DaoHelper = new DaoHelper(),
     private readonly MealModel = getMealModel(connection)
   ) {}
 
@@ -32,37 +35,28 @@ export class MealDaoMongoose implements MealDao {
   };
 
   search = async (
-    query: MealSearchQuery,
-    pagination: Pagination
+    query?: MealSearchQuery,
+    pagination?: Pagination
   ): Promise<PaginatedResult<Meal>> => {
     const mongoQuery = {
-      ...(query.dateRange && {
+      ...(query?.dateRange && {
         date: { $gte: query.dateRange.from, $lte: query.dateRange.to },
       }),
-      ...(query.recipeIds && {
+      ...(query?.recipeIds && {
         recipeId: { $in: query.recipeIds },
       }),
     };
 
-    const items = await this.MealModel.find(mongoQuery)
-      .skip(pagination.skip)
-      .limit(pagination.take)
-      .lean();
-    const total = await this.MealModel.countDocuments(mongoQuery);
-
-    return {
-      items: items.map(mongooseMealToMealDto),
-      total,
-    };
+    return this.daoHelper.paginateQuery({
+      query: this.MealModel.find(mongoQuery),
+      pagination,
+      mapResult: mongooseMealToMealDto,
+    });
   };
 
   findById = async (id: string): Promise<Meal | null> => {
     const result = await this.MealModel.findById(id).lean();
-    if (result !== null) {
-      return mongooseMealToMealDto(result);
-    } else {
-      return null;
-    }
+    return mapNull(result, mongooseMealToMealDto);
   };
 
   delete = async (id: string): Promise<void> => {
