@@ -14,6 +14,7 @@ export interface PaginateQueryInput<QueryItem, ResultItem, DocType> {
 }
 
 export class DaoHelper {
+  // Paginate the given mongoose query, and map the result.
   paginateQuery = async <QueryItem, ResultItem, DocType>({
     query,
     mapResult,

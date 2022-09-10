@@ -3,7 +3,7 @@ import { z } from "zod";
 import { DateRange } from "../../types/date-range";
 import { Inventory } from "../../types/inventory";
 import { InventoryChange } from "../../types/inventory-change";
-import { PaginatedResult } from "../../types/pagination";
+import { PaginatedResult, Pagination } from "../../types/pagination";
 import { QuantifiedIngredientRef } from "../../types/quantified-ingredient";
 import { Context } from "../context";
 
@@ -38,17 +38,19 @@ export const inventoryRouter = trpc
     input: z.object({
       ingredientIds: z.string().array().optional(),
       dateRange: DateRange.optional(),
+      pagination: Pagination.optional(),
     }),
     output: PaginatedResult(InventoryChange),
     resolve: async ({
       ctx: {
         logic: { inventoryManager },
       },
-      input: { ingredientIds, dateRange },
+      input: { ingredientIds, dateRange, pagination },
     }) => {
       return await inventoryManager.getInventoryHistory(
         ingredientIds,
-        dateRange
+        dateRange,
+        pagination
       );
     },
   })

@@ -6,7 +6,11 @@ import { DateRange } from "../types/date-range";
 import { Inventory } from "../types/inventory";
 import { InventoryChange } from "../types/inventory-change";
 import { InventoryEntry } from "../types/inventory-entry";
-import { INFINITE_PAGINATION, PaginatedResult } from "../types/pagination";
+import {
+  INFINITE_PAGINATION,
+  PaginatedResult,
+  Pagination,
+} from "../types/pagination";
 import { QuantifiedIngredientRef } from "../types/quantified-ingredient";
 import { Unit } from "../types/unit";
 import { BadRequestException, NotFoundException } from "../utils/exceptions";
@@ -89,9 +93,13 @@ export class InventoryManager {
   // Get the history of the current inventory in the form of inventory change entries.
   getInventoryHistory = async (
     ingredientIds?: string[],
-    dateRange?: DateRange
+    dateRange?: DateRange,
+    pagination?: Pagination
   ): Promise<PaginatedResult<InventoryChange>> => {
-    return await this.inventoryChangeDao.search({ ingredientIds, dateRange });
+    return await this.inventoryChangeDao.search(
+      { ingredientIds, dateRange },
+      pagination
+    );
   };
 
   private updateInventoryInMode = async (
