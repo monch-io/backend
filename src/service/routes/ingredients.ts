@@ -52,7 +52,7 @@ export const ingredientsRouter = trpc
       return await ingredientDao.findById(input.id);
     },
   })
-  .mutation("delete", {
+  .mutation("update", {
     input: z.object({ id: z.string(), data: UpdateIngredient }),
     output: z.void(),
     resolve: async ({
