@@ -87,10 +87,7 @@ export class InventoryEntryDaoMongoose implements InventoryEntryDao {
     return mapNull(result, mongooseInventoryEntryToInventoryEntryDto);
   };
 
-  updateById = async (
-    id: string,
-    data: UpdateInventoryEntry
-  ): Promise<void> => {
+  update = async (id: string, data: UpdateInventoryEntry): Promise<void> => {
     await this.InventoryEntryModel.updateOne(
       {
         _id: id,

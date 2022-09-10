@@ -245,7 +245,7 @@ export class InventoryManager {
         await this.inventoryEntryDao.create(inventoryEntry.data);
       } else {
         // Update existing entry otherwise.
-        await this.inventoryEntryDao.updateById(
+        await this.inventoryEntryDao.update(
           inventoryEntry.id,
           inventoryEntry.data
         );
