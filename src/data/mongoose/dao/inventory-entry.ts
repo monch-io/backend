@@ -15,6 +15,7 @@ import { InventoryEntryDao } from "../../dao/inventory-entry";
 import { Unit } from "../../../types/unit";
 import { DaoHelper } from "./dao-helper";
 import { mapNull } from "../../../utils/mapping";
+import { handleMongooseError } from "../errors";
 
 const mongooseInventoryEntryToInventoryEntryDto = (
   mongooseInventoryEntry: InventoryEntryClass
@@ -49,54 +50,58 @@ export class InventoryEntryDaoMongoose implements InventoryEntryDao {
     private readonly InventoryEntryModel = getInventoryEntryModel(connection)
   ) {}
 
-  create = async (data: CreateInventoryEntry): Promise<string> => {
-    const createdInventoryEntry = await this.InventoryEntryModel.create(
-      createInventoryEntryDtoToMongooseCreateInventoryEntry(data)
-    );
-    return createdInventoryEntry._id.toString();
-  };
+  create = (data: CreateInventoryEntry): Promise<string> =>
+    handleMongooseError(async () => {
+      const createdInventoryEntry = await this.InventoryEntryModel.create(
+        createInventoryEntryDtoToMongooseCreateInventoryEntry(data)
+      );
+      return createdInventoryEntry._id.toString();
+    });
 
   search = (
     query?: InventoryEntrySearchQuery,
     pagination?: Pagination
-  ): Promise<PaginatedResult<InventoryEntry>> => {
-    const mongoQuery = {
-      ...(query?.ingredientIds && {
-        "data.ingredientId": { $in: query.ingredientIds },
-      }),
-    };
+  ): Promise<PaginatedResult<InventoryEntry>> =>
+    handleMongooseError(async () => {
+      const mongoQuery = {
+        ...(query?.ingredientIds && {
+          "data.ingredientId": { $in: query.ingredientIds },
+        }),
+      };
 
-    return this.daoHelper.paginateQuery({
-      query: this.InventoryEntryModel.find(mongoQuery),
-      pagination,
-      mapResult: mongooseInventoryEntryToInventoryEntryDto,
+      return this.daoHelper.paginateQuery({
+        query: this.InventoryEntryModel.find(mongoQuery),
+        pagination,
+        mapResult: mongooseInventoryEntryToInventoryEntryDto,
+      });
     });
-  };
 
-  findById = async (id: string): Promise<InventoryEntry | null> => {
-    const result = await this.InventoryEntryModel.findById(id).lean();
-    return mapNull(result, mongooseInventoryEntryToInventoryEntryDto);
-  };
+  findById = (id: string): Promise<InventoryEntry | null> =>
+    handleMongooseError(async () => {
+      const result = await this.InventoryEntryModel.findById(id).lean();
+      return mapNull(result, mongooseInventoryEntryToInventoryEntryDto);
+    });
 
-  findByIngredientId = async (
-    ingredientId: string
-  ): Promise<InventoryEntry | null> => {
-    const result = await this.InventoryEntryModel.findOne({
-      "data.ingredientId": ingredientId,
-    }).lean();
-    return mapNull(result, mongooseInventoryEntryToInventoryEntryDto);
-  };
+  findByIngredientId = (ingredientId: string): Promise<InventoryEntry | null> =>
+    handleMongooseError(async () => {
+      const result = await this.InventoryEntryModel.findOne({
+        "data.ingredientId": ingredientId,
+      }).lean();
+      return mapNull(result, mongooseInventoryEntryToInventoryEntryDto);
+    });
 
-  update = async (id: string, data: UpdateInventoryEntry): Promise<void> => {
-    await this.InventoryEntryModel.updateOne(
-      {
-        _id: id,
-      },
-      createInventoryEntryDtoToMongooseCreateInventoryEntry(data)
-    );
-  };
+  update = (id: string, data: UpdateInventoryEntry): Promise<void> =>
+    handleMongooseError(async () => {
+      await this.InventoryEntryModel.updateOne(
+        {
+          _id: id,
+        },
+        createInventoryEntryDtoToMongooseCreateInventoryEntry(data)
+      );
+    });
 
-  delete = async (id: string): Promise<void> => {
-    await this.InventoryEntryModel.findByIdAndDelete(id);
-  };
+  delete = (id: string): Promise<void> =>
+    handleMongooseError(async () => {
+      await this.InventoryEntryModel.findByIdAndDelete(id);
+    });
 }

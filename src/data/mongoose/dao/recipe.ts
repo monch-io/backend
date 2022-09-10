@@ -13,6 +13,7 @@ import { RecipeDao } from "../../dao/recipe";
 import { getRecipeModel, RecipeClass } from "../schema/recipe";
 import { DaoHelper } from "./dao-helper";
 import { mapNull } from "../../../utils/mapping";
+import { handleMongooseError } from "../errors";
 
 const mongooseRecipeToRecipeDtoWithoutIngredients = (
   mongooseRecipe: RecipeClass
@@ -59,51 +60,57 @@ export class RecipeDaoMongoose implements RecipeDao {
     private readonly RecipeModel = getRecipeModel(connection)
   ) {}
 
-  create = async (recipe: CreateRecipe): Promise<string> => {
-    const createdRecipe = await this.RecipeModel.create(
-      createRecipeDtoToMongooseCreateRecipe(recipe)
-    );
-    return createdRecipe._id.toString();
-  };
+  create = (recipe: CreateRecipe): Promise<string> =>
+    handleMongooseError(async () => {
+      const createdRecipe = await this.RecipeModel.create(
+        createRecipeDtoToMongooseCreateRecipe(recipe)
+      );
+      return createdRecipe._id.toString();
+    });
 
-  search = async (
+  search = (
     query?: RecipeSearchQuery,
     pagination?: Pagination
-  ): Promise<PaginatedResult<Recipe>> => {
-    const mongoQuery = {
-      ...(query?.text && { $text: { $search: query.text } }),
-      ...(query?.tags && { tags: { $in: query.tags } }),
-    };
+  ): Promise<PaginatedResult<Recipe>> =>
+    handleMongooseError(async () => {
+      const mongoQuery = {
+        ...(query?.text && { $text: { $search: query.text } }),
+        ...(query?.tags && { tags: { $in: query.tags } }),
+      };
 
-    return await this.daoHelper.paginateQuery({
-      query: this.RecipeModel.find(mongoQuery),
-      pagination,
-      mapResult: mongooseRecipeToRecipeDto,
+      return await this.daoHelper.paginateQuery({
+        query: this.RecipeModel.find(mongoQuery),
+        pagination,
+        mapResult: mongooseRecipeToRecipeDto,
+      });
     });
-  };
 
-  findById = async (id: string): Promise<Recipe | null> => {
-    const result = await this.RecipeModel.findById(id).lean();
-    return mapNull(result, mongooseRecipeToRecipeDto);
-  };
+  findById = (id: string): Promise<Recipe | null> =>
+    handleMongooseError(async () => {
+      const result = await this.RecipeModel.findById(id).lean();
+      return mapNull(result, mongooseRecipeToRecipeDto);
+    });
 
-  findByIdWithoutIngredients = async (
+  findByIdWithoutIngredients = (
     id: string
-  ): Promise<RecipeWithoutIngredients | null> => {
-    const result = await this.RecipeModel.findById(id, {
-      ingredients: false,
-    }).lean();
-    return mapNull(result, mongooseRecipeToRecipeDtoWithoutIngredients);
-  };
+  ): Promise<RecipeWithoutIngredients | null> =>
+    handleMongooseError(async () => {
+      const result = await this.RecipeModel.findById(id, {
+        ingredients: false,
+      }).lean();
+      return mapNull(result, mongooseRecipeToRecipeDtoWithoutIngredients);
+    });
 
-  update = async (id: string, recipe: UpdateRecipe): Promise<void> => {
-    await this.RecipeModel.findByIdAndUpdate(
-      id,
-      createRecipeDtoToMongooseCreateRecipe(recipe)
-    );
-  };
+  update = (id: string, recipe: UpdateRecipe): Promise<void> =>
+    handleMongooseError(async () => {
+      await this.RecipeModel.findByIdAndUpdate(
+        id,
+        createRecipeDtoToMongooseCreateRecipe(recipe)
+      );
+    });
 
-  delete = async (id: string): Promise<void> => {
-    await this.RecipeModel.findByIdAndDelete(id);
-  };
+  delete = (id: string): Promise<void> =>
+    handleMongooseError(async () => {
+      await this.RecipeModel.findByIdAndDelete(id);
+    });
 }
