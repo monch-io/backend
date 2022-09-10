@@ -1,6 +1,10 @@
 import * as trpc from "@trpc/server";
 import { z } from "zod";
-import { CreateIngredient, Ingredient } from "../../types/ingredient";
+import {
+  CreateIngredient,
+  Ingredient,
+  UpdateIngredient,
+} from "../../types/ingredient";
 import { IngredientSearchQuery } from "../../types/ingredient-search-query";
 import { Pagination, PaginatedResult } from "../../types/pagination";
 import { Context } from "../context";
@@ -46,6 +50,18 @@ export const ingredientsRouter = trpc
       },
     }) => {
       return await ingredientDao.findById(input.id);
+    },
+  })
+  .mutation("update", {
+    input: z.object({ id: z.string(), data: UpdateIngredient }),
+    output: z.void(),
+    resolve: async ({
+      input,
+      ctx: {
+        daos: { ingredientDao },
+      },
+    }) => {
+      return await ingredientDao.update(input.id, input.data);
     },
   })
   .mutation("delete", {

@@ -1,4 +1,8 @@
-import { CreateIngredient, Ingredient } from "../../types/ingredient";
+import {
+  CreateIngredient,
+  Ingredient,
+  UpdateIngredient,
+} from "../../types/ingredient";
 import { IngredientSearchQuery } from "../../types/ingredient-search-query";
 import { PaginatedResult, Pagination } from "../../types/pagination";
 
@@ -9,5 +13,7 @@ export interface IngredientDao {
     pagination?: Pagination
   ) => Promise<PaginatedResult<Ingredient>>;
   findById: (id: string) => Promise<Ingredient | null>;
+
+  update: (id: string, data: UpdateIngredient) => Promise<void>;
   delete: (id: string) => Promise<void>;
 }
