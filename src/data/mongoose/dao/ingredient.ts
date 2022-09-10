@@ -1,5 +1,9 @@
 import mongoose from "mongoose";
-import { CreateIngredient, Ingredient } from "../../../types/ingredient";
+import {
+  CreateIngredient,
+  Ingredient,
+  UpdateIngredient,
+} from "../../../types/ingredient";
 import { IngredientSearchQuery } from "../../../types/ingredient-search-query";
 import { Pagination, PaginatedResult } from "../../../types/pagination";
 import { Dimension } from "../../../types/unit";
@@ -57,6 +61,13 @@ export class IngredientDaoMongoose implements IngredientDao {
   findById = async (id: string): Promise<Ingredient | null> => {
     const result = await this.IngredientModel.findById(id).lean();
     return mapNull(result, mongooseIngredientToIngredientDto);
+  };
+
+  update = async (id: string, data: UpdateIngredient): Promise<void> => {
+    await this.IngredientModel.findByIdAndUpdate(
+      id,
+      createIngredientDtoToMongooseCreateIngredient(data)
+    );
   };
 
   delete = async (id: string): Promise<void> => {

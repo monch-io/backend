@@ -10,3 +10,6 @@ export interface Ingredient extends z.infer<typeof Ingredient> {}
 
 export const CreateIngredient = Ingredient.omit({ id: true });
 export interface CreateIngredient extends z.infer<typeof CreateIngredient> {}
+
+export const UpdateIngredient = CreateIngredient;
+export interface UpdateIngredient extends z.infer<typeof UpdateIngredient> {}
