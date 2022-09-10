@@ -22,7 +22,7 @@ const mongooseInventoryEntryToInventoryEntryDto = (
   assertConforms(InventoryEntry, {
     id: mongooseInventoryEntry._id.toString(),
     data: {
-      ingredientId: mongooseInventoryEntry.data.ingredientId.toString(),
+      ingredientId: mongooseInventoryEntry.data.ingredientId._id.toString(),
       quantity: {
         unit: mongooseInventoryEntry.data.quantity.unit as Unit,
         value: mongooseInventoryEntry.data.quantity.value,
@@ -33,10 +33,12 @@ const mongooseInventoryEntryToInventoryEntryDto = (
 const createInventoryEntryDtoToMongooseCreateInventoryEntry = (
   createInventoryEntryDto: CreateInventoryEntry
 ) => ({
-  ingredientId: createInventoryEntryDto.ingredientId.toString(),
-  quantity: {
-    unit: createInventoryEntryDto.quantity.unit,
-    value: createInventoryEntryDto.quantity.value,
+  data: {
+    ingredientId: createInventoryEntryDto.ingredientId.toString(),
+    quantity: {
+      unit: createInventoryEntryDto.quantity.unit,
+      value: createInventoryEntryDto.quantity.value,
+    },
   },
 });
 
@@ -60,7 +62,7 @@ export class InventoryEntryDaoMongoose implements InventoryEntryDao {
   ): Promise<PaginatedResult<InventoryEntry>> => {
     const mongoQuery = {
       ...(query?.ingredientIds && {
-        ingredientId: { $in: query.ingredientIds },
+        "data.ingredientId": { $in: query.ingredientIds },
       }),
     };
 
@@ -80,7 +82,7 @@ export class InventoryEntryDaoMongoose implements InventoryEntryDao {
     ingredientId: string
   ): Promise<InventoryEntry | null> => {
     const result = await this.InventoryEntryModel.findOne({
-      data: { ingredientId },
+      "data.ingredientId": ingredientId,
     }).lean();
     return mapNull(result, mongooseInventoryEntryToInventoryEntryDto);
   };

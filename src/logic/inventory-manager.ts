@@ -26,7 +26,7 @@ export class InventoryManager {
 
   // Get the current inventory, which is for each ingredient
   getInventory = async (): Promise<Inventory> => {
-    const entriesByIngredientId = new Map();
+    const entriesByIngredientId = new Map<string, QuantifiedIngredientRef>();
     const inventoryEntries = await this.inventoryEntryDao.search(
       {},
       INFINITE_PAGINATION
@@ -35,13 +35,17 @@ export class InventoryManager {
     for (const { data } of inventoryEntries.items) {
       if (entriesByIngredientId.has(data.ingredientId)) {
         LOG.warn(
-          `Found ingredient with id=${data.ingredientId} in inventory twice! Results might be incorrect.`
+          `Found ingredient with id=${data.ingredientId} in inventory multiple times! Results might be incorrect.`
         );
       }
-      entriesByIngredientId.set(data.ingredientId, data.quantity);
+      entriesByIngredientId.set(data.ingredientId, data);
     }
 
-    return { entriesByIngredientId };
+    return {
+      entriesByIngredientId: Object.fromEntries(
+        entriesByIngredientId.entries()
+      ),
+    };
   };
 
   // Get the quantity of a specific ingredient in the inventory
@@ -111,28 +115,25 @@ export class InventoryManager {
   private fetchInventoryByIngredientIds = async (
     ingredientIds: string[]
   ): Promise<Map<string, InventoryEntryOptionalId>> => {
-    return await Promise.all(
-      ingredientIds.map(async (ingredientId) => {
-        await this.ensureIngredientExists(ingredientId);
-        const inventoryEntry = await this.inventoryEntryDao.findByIngredientId(
-          ingredientId
-        );
-        type Ret = [string, InventoryEntryOptionalId];
-        if (inventoryEntry === null) {
-          return [
+    const result = new Map<string, InventoryEntryOptionalId>();
+    for (const ingredientId of ingredientIds) {
+      await this.ensureIngredientExists(ingredientId);
+      const inventoryEntry = await this.inventoryEntryDao.findByIngredientId(
+        ingredientId
+      );
+      if (inventoryEntry === null) {
+        result.set(ingredientId, {
+          id: undefined,
+          data: {
             ingredientId,
-            {
-              id: undefined,
-              data: {
-                ingredientId,
-                quantity: { value: 0, unit: undefined },
-              },
-            },
-          ] as Ret;
-        }
-        return [ingredientId, inventoryEntry] as Ret;
-      })
-    ).then((result) => new Map(result));
+            quantity: { value: 0, unit: undefined },
+          },
+        });
+      } else {
+        result.set(ingredientId, inventoryEntry);
+      }
+    }
+    return result;
   };
 
   private updateInventoryInMapForChange = (
@@ -196,7 +197,7 @@ export class InventoryManager {
       changeMode === "relative"
         ? data.quantity.value + change.quantity.value
         : change.quantity.value;
-    const newUnit = data.quantity.unit ?? change.quantity.unit;
+    const newUnit = change.quantity.unit ?? data.quantity.unit;
     if (newQuantity < 0) {
       throw cannotLower(change.ingredientId);
     }
