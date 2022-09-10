@@ -11,7 +11,7 @@ export abstract class Exception extends Error {
     new TRPCError({
       code,
       message: this.message,
-      cause: this.cause || this.stack,
+      cause: this,
     });
 }
 
