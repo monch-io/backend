@@ -8,7 +8,11 @@ export abstract class Exception extends Error {
   abstract toTRPCError: () => TRPCError;
 
   protected toTRPCErrorWithCode = (code: TRPCError["code"]): TRPCError =>
-    new TRPCError({ code, message: this.message, cause: this.cause });
+    new TRPCError({
+      code,
+      message: this.message,
+      cause: this.cause || this.stack,
+    });
 }
 
 export class NotFoundException extends Exception {
