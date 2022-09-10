@@ -20,6 +20,7 @@ export const startService = async (
   app.use(
     helmet({
       contentSecurityPolicy: false,
+      crossOriginEmbedderPolicy: false,
     })
   );
   app.use(cors());
