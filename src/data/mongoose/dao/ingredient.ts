@@ -33,7 +33,7 @@ const createIngredientDtoToMongooseCreateIngredient = (
 export class IngredientDaoMongoose implements IngredientDao {
   constructor(
     connection: mongoose.Connection,
-    private readonly daoHelper = new DaoHelper(),
+    private readonly daoHelper = new DaoHelper("ingredient"),
     private readonly IngredientModel = getIngredientModel(connection)
   ) {}
 
@@ -69,14 +69,20 @@ export class IngredientDaoMongoose implements IngredientDao {
 
   update = (id: string, data: UpdateIngredient): Promise<void> =>
     handleMongooseError(async () => {
-      await this.IngredientModel.findByIdAndUpdate(
+      await this.daoHelper.ensureFound(
         id,
-        createIngredientDtoToMongooseCreateIngredient(data)
+        this.IngredientModel.findByIdAndUpdate(
+          id,
+          createIngredientDtoToMongooseCreateIngredient(data)
+        )
       );
     });
 
   delete = (id: string): Promise<void> =>
     handleMongooseError(async () => {
-      await this.IngredientModel.findByIdAndDelete(id);
+      await this.daoHelper.ensureFound(
+        id,
+        this.IngredientModel.findByIdAndDelete(id)
+      );
     });
 }

@@ -56,7 +56,7 @@ const createRecipeDtoToMongooseCreateRecipe = (recipe: CreateRecipe) => ({
 export class RecipeDaoMongoose implements RecipeDao {
   constructor(
     connection: mongoose.Connection,
-    private readonly daoHelper = new DaoHelper(),
+    private readonly daoHelper = new DaoHelper("recipe"),
     private readonly RecipeModel = getRecipeModel(connection)
   ) {}
 
@@ -103,14 +103,20 @@ export class RecipeDaoMongoose implements RecipeDao {
 
   update = (id: string, recipe: UpdateRecipe): Promise<void> =>
     handleMongooseError(async () => {
-      await this.RecipeModel.findByIdAndUpdate(
+      await this.daoHelper.ensureFound(
         id,
-        createRecipeDtoToMongooseCreateRecipe(recipe)
+        this.RecipeModel.findByIdAndUpdate(
+          id,
+          createRecipeDtoToMongooseCreateRecipe(recipe)
+        )
       );
     });
 
   delete = (id: string): Promise<void> =>
     handleMongooseError(async () => {
-      await this.RecipeModel.findByIdAndDelete(id);
+      await this.daoHelper.ensureFound(
+        id,
+        this.RecipeModel.findByIdAndDelete(id)
+      );
     });
 }

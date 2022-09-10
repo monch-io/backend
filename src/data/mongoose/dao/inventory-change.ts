@@ -47,7 +47,7 @@ const createInventoryChangeDtoToMongooseCreateInventoryChange = (
 export class InventoryChangeDaoMongoose implements InventoryChangeDao {
   constructor(
     connection: mongoose.Connection,
-    private readonly daoHelper: DaoHelper = new DaoHelper(),
+    private readonly daoHelper: DaoHelper = new DaoHelper("inventory change"),
     private readonly InventoryChangeModel = getInventoryChangeModel(connection)
   ) {}
 
@@ -96,6 +96,9 @@ export class InventoryChangeDaoMongoose implements InventoryChangeDao {
 
   delete = (id: string): Promise<void> =>
     handleMongooseError(async () => {
-      await this.InventoryChangeModel.findByIdAndDelete(id);
+      await this.daoHelper.ensureFound(
+        id,
+        this.InventoryChangeModel.findByIdAndDelete(id)
+      );
     });
 }

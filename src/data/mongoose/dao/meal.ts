@@ -24,7 +24,7 @@ const createMealDtoToMongooseCreateMeal = (meal: CreateMeal) => ({
 export class MealDaoMongoose implements MealDao {
   constructor(
     connection: mongoose.Connection,
-    private readonly daoHelper: DaoHelper = new DaoHelper(),
+    private readonly daoHelper: DaoHelper = new DaoHelper("meal"),
     private readonly MealModel = getMealModel(connection)
   ) {}
 
@@ -65,6 +65,9 @@ export class MealDaoMongoose implements MealDao {
 
   delete = (id: string): Promise<void> =>
     handleMongooseError(async () => {
-      await this.MealModel.findByIdAndDelete(id);
+      await this.daoHelper.ensureFound(
+        id,
+        this.MealModel.findByIdAndDelete(id)
+      );
     });
 }

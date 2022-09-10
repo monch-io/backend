@@ -46,7 +46,7 @@ const createInventoryEntryDtoToMongooseCreateInventoryEntry = (
 export class InventoryEntryDaoMongoose implements InventoryEntryDao {
   constructor(
     connection: mongoose.Connection,
-    private readonly daoHelper: DaoHelper = new DaoHelper(),
+    private readonly daoHelper: DaoHelper = new DaoHelper("inventory entry"),
     private readonly InventoryEntryModel = getInventoryEntryModel(connection)
   ) {}
 
@@ -92,16 +92,20 @@ export class InventoryEntryDaoMongoose implements InventoryEntryDao {
 
   update = (id: string, data: UpdateInventoryEntry): Promise<void> =>
     handleMongooseError(async () => {
-      await this.InventoryEntryModel.updateOne(
-        {
-          _id: id,
-        },
-        createInventoryEntryDtoToMongooseCreateInventoryEntry(data)
+      await this.daoHelper.ensureFound(
+        id,
+        this.InventoryEntryModel.findByIdAndUpdate(
+          id,
+          createInventoryEntryDtoToMongooseCreateInventoryEntry(data)
+        )
       );
     });
 
   delete = (id: string): Promise<void> =>
     handleMongooseError(async () => {
-      await this.InventoryEntryModel.findByIdAndDelete(id);
+      await this.daoHelper.ensureFound(
+        id,
+        this.InventoryEntryModel.findByIdAndDelete(id)
+      );
     });
 }
