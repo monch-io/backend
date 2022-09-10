@@ -11,6 +11,15 @@
         "varsIgnorePattern": "^_",
         "caughtErrorsIgnorePattern": "^_"
       }
+    ],
+    "@typescript-eslint/ban-types": [
+      "warn",
+      {
+        "types": {
+          "{}": false
+        },
+        "extendDefaults": true
+      }
     ]
   }
 }
