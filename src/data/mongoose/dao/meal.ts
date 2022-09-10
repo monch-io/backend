@@ -5,6 +5,7 @@ import { Pagination, PaginatedResult } from "../../../types/pagination";
 import { assertConforms } from "../../../utils/assertions";
 import { mapNull } from "../../../utils/mapping";
 import { MealDao } from "../../dao/meal";
+import { handleMongooseError } from "../errors";
 import { getMealModel, MealClass } from "../schema/meal";
 import { DaoHelper } from "./dao-helper";
 
@@ -27,39 +28,43 @@ export class MealDaoMongoose implements MealDao {
     private readonly MealModel = getMealModel(connection)
   ) {}
 
-  create = async (meal: CreateMeal): Promise<string> => {
-    const createdMeal = await this.MealModel.create(
-      createMealDtoToMongooseCreateMeal(meal)
-    );
-    return createdMeal._id.toString();
-  };
+  create = (meal: CreateMeal): Promise<string> =>
+    handleMongooseError(async () => {
+      const createdMeal = await this.MealModel.create(
+        createMealDtoToMongooseCreateMeal(meal)
+      );
+      return createdMeal._id.toString();
+    });
 
-  search = async (
+  search = (
     query?: MealSearchQuery,
     pagination?: Pagination
-  ): Promise<PaginatedResult<Meal>> => {
-    const mongoQuery = {
-      ...(query?.dateRange && {
-        date: { $gte: query.dateRange.from, $lte: query.dateRange.to },
-      }),
-      ...(query?.recipeIds && {
-        recipeId: { $in: query.recipeIds },
-      }),
-    };
+  ): Promise<PaginatedResult<Meal>> =>
+    handleMongooseError(async () => {
+      const mongoQuery = {
+        ...(query?.dateRange && {
+          date: { $gte: query.dateRange.from, $lte: query.dateRange.to },
+        }),
+        ...(query?.recipeIds && {
+          recipeId: { $in: query.recipeIds },
+        }),
+      };
 
-    return this.daoHelper.paginateQuery({
-      query: this.MealModel.find(mongoQuery),
-      pagination,
-      mapResult: mongooseMealToMealDto,
+      return this.daoHelper.paginateQuery({
+        query: this.MealModel.find(mongoQuery),
+        pagination,
+        mapResult: mongooseMealToMealDto,
+      });
     });
-  };
 
-  findById = async (id: string): Promise<Meal | null> => {
-    const result = await this.MealModel.findById(id).lean();
-    return mapNull(result, mongooseMealToMealDto);
-  };
+  findById = (id: string): Promise<Meal | null> =>
+    handleMongooseError(async () => {
+      const result = await this.MealModel.findById(id).lean();
+      return mapNull(result, mongooseMealToMealDto);
+    });
 
-  delete = async (id: string): Promise<void> => {
-    await this.MealModel.findByIdAndDelete(id);
-  };
+  delete = (id: string): Promise<void> =>
+    handleMongooseError(async () => {
+      await this.MealModel.findByIdAndDelete(id);
+    });
 }

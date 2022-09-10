@@ -10,6 +10,7 @@ import { Dimension } from "../../../types/unit";
 import { assertConforms } from "../../../utils/assertions";
 import { mapNull } from "../../../utils/mapping";
 import { IngredientDao } from "../../dao/ingredient";
+import { handleMongooseError } from "../errors";
 import { getIngredientModel, IngredientClass } from "../schema/ingredient";
 import { DaoHelper } from "./dao-helper";
 
@@ -36,41 +37,46 @@ export class IngredientDaoMongoose implements IngredientDao {
     private readonly IngredientModel = getIngredientModel(connection)
   ) {}
 
-  create = async (ingredient: CreateIngredient): Promise<string> => {
-    const createdIngredient = await this.IngredientModel.create(
-      createIngredientDtoToMongooseCreateIngredient(ingredient)
-    );
-    return createdIngredient._id.toString();
-  };
+  create = (ingredient: CreateIngredient): Promise<string> =>
+    handleMongooseError(async () => {
+      const createdIngredient = await this.IngredientModel.create(
+        createIngredientDtoToMongooseCreateIngredient(ingredient)
+      );
+      return createdIngredient._id.toString();
+    });
 
-  search = async (
+  search = (
     query?: IngredientSearchQuery,
     pagination?: Pagination
-  ): Promise<PaginatedResult<Ingredient>> => {
-    const mongoQuery = {
-      ...(query?.text && { $text: { $search: query.text } }),
-    };
+  ): Promise<PaginatedResult<Ingredient>> =>
+    handleMongooseError(async () => {
+      const mongoQuery = {
+        ...(query?.text && { $text: { $search: query.text } }),
+      };
 
-    return await this.daoHelper.paginateQuery({
-      query: this.IngredientModel.find(mongoQuery),
-      pagination,
-      mapResult: mongooseIngredientToIngredientDto,
+      return await this.daoHelper.paginateQuery({
+        query: this.IngredientModel.find(mongoQuery),
+        pagination,
+        mapResult: mongooseIngredientToIngredientDto,
+      });
     });
-  };
 
-  findById = async (id: string): Promise<Ingredient | null> => {
-    const result = await this.IngredientModel.findById(id).lean();
-    return mapNull(result, mongooseIngredientToIngredientDto);
-  };
+  findById = (id: string): Promise<Ingredient | null> =>
+    handleMongooseError(async () => {
+      const result = await this.IngredientModel.findById(id).lean();
+      return mapNull(result, mongooseIngredientToIngredientDto);
+    });
 
-  update = async (id: string, data: UpdateIngredient): Promise<void> => {
-    await this.IngredientModel.findByIdAndUpdate(
-      id,
-      createIngredientDtoToMongooseCreateIngredient(data)
-    );
-  };
+  update = (id: string, data: UpdateIngredient): Promise<void> =>
+    handleMongooseError(async () => {
+      await this.IngredientModel.findByIdAndUpdate(
+        id,
+        createIngredientDtoToMongooseCreateIngredient(data)
+      );
+    });
 
-  delete = async (id: string): Promise<void> => {
-    await this.IngredientModel.findByIdAndDelete(id);
-  };
+  delete = (id: string): Promise<void> =>
+    handleMongooseError(async () => {
+      await this.IngredientModel.findByIdAndDelete(id);
+    });
 }

@@ -14,6 +14,7 @@ import { InventoryChangeDao } from "../../dao/inventory-change";
 import { Unit } from "../../../types/unit";
 import { DaoHelper } from "./dao-helper";
 import { mapNull } from "../../../utils/mapping";
+import { handleMongooseError } from "../errors";
 
 const mongooseInventoryChangeToInventoryChangeDto = (
   mongooseInventoryChange: InventoryChangeClass
@@ -50,44 +51,51 @@ export class InventoryChangeDaoMongoose implements InventoryChangeDao {
     private readonly InventoryChangeModel = getInventoryChangeModel(connection)
   ) {}
 
-  create = async (data: CreateInventoryChange): Promise<string> => {
-    const createdInventoryChange = await this.InventoryChangeModel.create(
-      createInventoryChangeDtoToMongooseCreateInventoryChange(data)
-    );
-    return createdInventoryChange._id.toString();
-  };
+  create = (data: CreateInventoryChange): Promise<string> =>
+    handleMongooseError(async () => {
+      const createdInventoryChange = await this.InventoryChangeModel.create(
+        createInventoryChangeDtoToMongooseCreateInventoryChange(data)
+      );
+      return createdInventoryChange._id.toString();
+    });
 
-  createMany = async (data: CreateInventoryChange[]): Promise<string[]> => {
-    const createdInventoryChange = await this.InventoryChangeModel.create(
-      data.map(createInventoryChangeDtoToMongooseCreateInventoryChange)
-    );
-    return createdInventoryChange.map(({ _id }) => _id.toString());
-  };
+  createMany = (data: CreateInventoryChange[]): Promise<string[]> =>
+    handleMongooseError(async () => {
+      const createdInventoryChange = await this.InventoryChangeModel.create(
+        data.map(createInventoryChangeDtoToMongooseCreateInventoryChange)
+      );
+      return createdInventoryChange.map(({ _id }) => _id.toString());
+    });
 
   search = (
     query?: InventoryChangeSearchQuery,
     pagination?: Pagination
-  ): Promise<PaginatedResult<InventoryChange>> => {
-    const mongoQuery = {
-      ...(query?.dateRange && {
-        date: { $gte: query.dateRange.from, $lte: query.dateRange.to },
-      }),
-      ...(query?.ingredientIds && {
-        ingredientId: { $in: query.ingredientIds },
-      }),
-    };
+  ): Promise<PaginatedResult<InventoryChange>> =>
+    handleMongooseError(async () => {
+      const mongoQuery = {
+        ...(query?.dateRange && {
+          date: { $gte: query.dateRange.from, $lte: query.dateRange.to },
+        }),
+        ...(query?.ingredientIds && {
+          ingredientId: { $in: query.ingredientIds },
+        }),
+      };
 
-    return this.daoHelper.paginateQuery({
-      query: this.InventoryChangeModel.find(mongoQuery),
-      pagination,
-      mapResult: mongooseInventoryChangeToInventoryChangeDto,
+      return await this.daoHelper.paginateQuery({
+        query: this.InventoryChangeModel.find(mongoQuery),
+        pagination,
+        mapResult: mongooseInventoryChangeToInventoryChangeDto,
+      });
     });
-  };
-  findById = async (id: string): Promise<InventoryChange | null> => {
-    const result = await this.InventoryChangeModel.findById(id).lean();
-    return mapNull(result, mongooseInventoryChangeToInventoryChangeDto);
-  };
-  delete = async (id: string): Promise<void> => {
-    await this.InventoryChangeModel.findByIdAndDelete(id);
-  };
+
+  findById = (id: string): Promise<InventoryChange | null> =>
+    handleMongooseError(async () => {
+      const result = await this.InventoryChangeModel.findById(id).lean();
+      return mapNull(result, mongooseInventoryChangeToInventoryChangeDto);
+    });
+
+  delete = (id: string): Promise<void> =>
+    handleMongooseError(async () => {
+      await this.InventoryChangeModel.findByIdAndDelete(id);
+    });
 }
