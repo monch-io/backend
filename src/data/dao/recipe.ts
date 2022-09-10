@@ -19,7 +19,7 @@ export interface RecipeDao {
   findByIdWithoutIngredients: (
     id: string
   ) => Promise<RecipeWithoutIngredients | null>;
-  update: (id: string, recipe: UpdateRecipe) => Promise<void>;
 
+  update: (id: string, recipe: UpdateRecipe) => Promise<void>;
   delete: (id: string) => Promise<void>;
 }

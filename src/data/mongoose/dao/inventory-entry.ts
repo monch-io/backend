@@ -2,6 +2,7 @@ import { assertConforms } from "../../../utils/assertions";
 import {
   CreateInventoryEntry,
   InventoryEntry,
+  UpdateInventoryEntry,
 } from "../../../types/inventory-entry";
 import { InventoryEntrySearchQuery } from "../../../types/inventory-entry-search-query";
 import { PaginatedResult, Pagination } from "../../../types/pagination";
@@ -21,7 +22,7 @@ const mongooseInventoryEntryToInventoryEntryDto = (
   assertConforms(InventoryEntry, {
     id: mongooseInventoryEntry._id.toString(),
     data: {
-      ingredientId: mongooseInventoryEntry.data.ingredientId.toString(),
+      ingredientId: mongooseInventoryEntry.data.ingredientId._id.toString(),
       quantity: {
         unit: mongooseInventoryEntry.data.quantity.unit as Unit,
         value: mongooseInventoryEntry.data.quantity.value,
@@ -32,10 +33,12 @@ const mongooseInventoryEntryToInventoryEntryDto = (
 const createInventoryEntryDtoToMongooseCreateInventoryEntry = (
   createInventoryEntryDto: CreateInventoryEntry
 ) => ({
-  ingredientId: createInventoryEntryDto.ingredientId.toString(),
-  quantity: {
-    unit: createInventoryEntryDto.quantity.unit,
-    value: createInventoryEntryDto.quantity.value,
+  data: {
+    ingredientId: createInventoryEntryDto.ingredientId.toString(),
+    quantity: {
+      unit: createInventoryEntryDto.quantity.unit,
+      value: createInventoryEntryDto.quantity.value,
+    },
   },
 });
 
@@ -52,13 +55,14 @@ export class InventoryEntryDaoMongoose implements InventoryEntryDao {
     );
     return createdInventoryEntry._id.toString();
   };
+
   search = (
     query?: InventoryEntrySearchQuery,
     pagination?: Pagination
   ): Promise<PaginatedResult<InventoryEntry>> => {
     const mongoQuery = {
       ...(query?.ingredientIds && {
-        ingredientId: { $in: query.ingredientIds },
+        "data.ingredientId": { $in: query.ingredientIds },
       }),
     };
 
@@ -68,10 +72,30 @@ export class InventoryEntryDaoMongoose implements InventoryEntryDao {
       mapResult: mongooseInventoryEntryToInventoryEntryDto,
     });
   };
+
   findById = async (id: string): Promise<InventoryEntry | null> => {
     const result = await this.InventoryEntryModel.findById(id).lean();
     return mapNull(result, mongooseInventoryEntryToInventoryEntryDto);
   };
+
+  findByIngredientId = async (
+    ingredientId: string
+  ): Promise<InventoryEntry | null> => {
+    const result = await this.InventoryEntryModel.findOne({
+      "data.ingredientId": ingredientId,
+    }).lean();
+    return mapNull(result, mongooseInventoryEntryToInventoryEntryDto);
+  };
+
+  update = async (id: string, data: UpdateInventoryEntry): Promise<void> => {
+    await this.InventoryEntryModel.updateOne(
+      {
+        _id: id,
+      },
+      createInventoryEntryDtoToMongooseCreateInventoryEntry(data)
+    );
+  };
+
   delete = async (id: string): Promise<void> => {
     await this.InventoryEntryModel.findByIdAndDelete(id);
   };

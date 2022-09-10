@@ -6,6 +6,11 @@ export const Pagination = z.object({
 });
 export interface Pagination extends z.infer<typeof Pagination> {}
 
+export const INFINITE_PAGINATION = {
+  skip: 0,
+  take: Number.MAX_VALUE,
+};
+
 export const PaginatedResult = <T>(item: z.ZodType<T>) =>
   z.object({
     items: item.array(),

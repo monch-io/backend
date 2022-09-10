@@ -7,6 +7,8 @@ import { PaginatedResult, Pagination } from "../../types/pagination";
 
 export interface InventoryChangeDao {
   create: (data: CreateInventoryChange) => Promise<string>;
+  createMany: (data: CreateInventoryChange[]) => Promise<string[]>;
+
   search: (
     query?: InventoryChangeSearchQuery,
     pagination?: Pagination

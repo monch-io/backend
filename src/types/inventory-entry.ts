@@ -10,3 +10,7 @@ export interface InventoryEntry extends z.infer<typeof InventoryEntry> {}
 export const CreateInventoryEntry = QuantifiedIngredientRef;
 export interface CreateInventoryEntry
   extends z.infer<typeof CreateInventoryEntry> {}
+
+export const UpdateInventoryEntry = CreateInventoryEntry;
+export interface UpdateInventoryEntry
+  extends z.infer<typeof UpdateInventoryEntry> {}

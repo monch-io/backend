@@ -38,9 +38,6 @@ export const startService = async (
     trpcExpress.createExpressMiddleware({
       router: appRouter,
       createContext: () => ({ ...globalContext }),
-      onError: ({ error }) => {
-        LOG.error(error);
-      },
     })
   );
 

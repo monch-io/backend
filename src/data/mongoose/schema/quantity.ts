@@ -4,6 +4,6 @@ export class QuantityClass {
   @prop({ required: true })
   value!: number;
 
-  @prop({ required: true })
+  @prop()
   unit!: string;
 }

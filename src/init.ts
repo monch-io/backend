@@ -2,15 +2,14 @@ import "source-map-support/register";
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import { setupDaosWithMongoose } from "./data/mongoose/init";
-import { GlobalContext } from "./service/context";
-
+import { setupDaosWithMongoose as makeDaosWithMongoose } from "./data/mongoose/init";
 import { startService } from "./service/init";
+import { makeLogicFromDaos } from "./logic/init";
 
 const main = async () => {
-  const daos = await setupDaosWithMongoose();
-  const globalContext: GlobalContext = { daos };
-  await startService(globalContext);
+  const daos = await makeDaosWithMongoose();
+  const logic = await makeLogicFromDaos(daos);
+  await startService({ daos, logic });
 };
 
 main().catch((err) => {

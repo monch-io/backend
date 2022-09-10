@@ -10,7 +10,7 @@ import { WithId } from "./with-id";
 @modelOptions({ schemaOptions: { collection: "inventoryEntries" } })
 export class InventoryEntryClass extends WithId {
   @prop({ required: true })
-  public data!: QuantifiedIngredientClass;
+  data!: QuantifiedIngredientClass;
 }
 
 export const getInventoryEntryModel = (
