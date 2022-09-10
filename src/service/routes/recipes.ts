@@ -27,8 +27,8 @@ export const recipesRouter = trpc
   })
   .query("search", {
     input: z.object({
-      query: RecipeSearchQuery,
-      pagination: Pagination,
+      query: RecipeSearchQuery.optional(),
+      pagination: Pagination.optional(),
     }),
     output: PaginatedResult(RecipeWithoutIngredients),
     resolve: async ({

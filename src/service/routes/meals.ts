@@ -21,8 +21,8 @@ export const mealsRouter = trpc
   })
   .query("search", {
     input: z.object({
-      query: MealSearchQuery,
-      pagination: Pagination,
+      query: MealSearchQuery.optional(),
+      pagination: Pagination.optional(),
     }),
     output: PaginatedResult(Meal),
     resolve: async ({

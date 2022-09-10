@@ -25,8 +25,8 @@ export const ingredientsRouter = trpc
   })
   .query("search", {
     input: z.object({
-      query: IngredientSearchQuery,
-      pagination: Pagination,
+      query: IngredientSearchQuery.optional(),
+      pagination: Pagination.optional(),
     }),
     output: PaginatedResult(Ingredient),
     resolve: async ({
