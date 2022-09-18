@@ -1,4 +1,5 @@
 import * as trpc from "@trpc/server";
+import superjson from "superjson";
 import { Exception } from "../utils/exceptions";
 import { LOG } from "../utils/log";
 import { Context } from "./context";
@@ -10,6 +11,7 @@ import { recipesRouter } from "./routes/recipes";
 const baseRouter = trpc.router<Context>();
 
 export const appRouter = baseRouter
+  .transformer(superjson)
   .middleware(({ type, path, next }) => {
     LOG.info(`[${type.toUpperCase()}] ${path}`);
     return next();

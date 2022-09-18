@@ -61,7 +61,7 @@ export const mealsRouter = trpc
       return await mealDao.delete(input.id);
     },
   })
-  .query("makeMealPlan", {
+  .mutation("makeMealPlan", {
     input: z.object({
       mealDates: z.date().array(),
     }),
@@ -75,7 +75,7 @@ export const mealsRouter = trpc
       return await mealPlanner.makeMealPlan(input.mealDates);
     },
   })
-  .query("acceptMealPlan", {
+  .mutation("acceptMealPlan", {
     input: z.object({
       mealPlan: MealPlan,
     }),

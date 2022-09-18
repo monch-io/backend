@@ -27,7 +27,9 @@ export function assert(
   condition: boolean,
   message?: string
 ): asserts condition {
-  if (condition) {
-    throw new Error(`Assertion failed${message && `: ${message}`}`);
+  if (!condition) {
+    throw new Error(
+      `Assertion failed${typeof message !== "undefined" ? `: ${message}` : ""}`
+    );
   }
 }
