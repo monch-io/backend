@@ -72,7 +72,10 @@ export class MealPlanner {
   };
 
   acceptMealPlan = async (mealPlan: MealPlan): Promise<void> => {
-    return todo(mealPlan);
+    // @@Todo: transaction
+    for (const meal of mealPlan) {
+      await this.mealDao.create(meal);
+    }
   };
 
   private calculateIngredientUsageForRecipe = (
