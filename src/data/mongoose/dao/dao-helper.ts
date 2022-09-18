@@ -16,11 +16,15 @@ export interface PaginateQueryInput<QueryItem, ResultItem, DocType> {
 
 export class DaoHelper {
   constructor(
-    // The natural name of the entity
+    /**
+     * The natural name of the entity
+     */
     readonly naturalEntityName: string
   ) {}
 
-  // Capitalise the natural name of the entity
+  /**
+   * Capitalise the natural name of the entity
+   */
   capitalisedNaturalEntityName = (): string => {
     return (
       this.naturalEntityName.charAt(0).toUpperCase() +
@@ -28,7 +32,9 @@ export class DaoHelper {
     );
   };
 
-  // Paginate the given mongoose query, and map the result.
+  /**
+   * Paginate the given mongoose query, and map the result.
+   */
   paginateQuery = async <QueryItem, ResultItem, DocType>({
     query,
     mapResult,
@@ -45,7 +51,10 @@ export class DaoHelper {
     return { items: items.map(mapResult), total };
   };
 
-  // Ensure that the given id-indexed query has a non-null result, queried by the given id.
+  /**
+   * Ensure that the given id-indexed query has a non-null result, queried by
+   * the given id.
+   */
   ensureFound = async <
     T,
     DocType,

@@ -2,10 +2,14 @@ import { Quantity } from "../types/quantity";
 import { Unit } from "../types/unit";
 import { assert } from "../utils/assertions";
 
-// Quantity of zero
+/**
+ * Quantity of zero
+ */
 export const ZERO_QUANTITY = { value: 0 } as const;
 
-// Make a quantity from the given value and unit
+/**
+ * Make a quantity from the given value and unit
+ */
 export const makeQuantity = (value: number, unit: Unit): Quantity => {
   if (value === 0) {
     return ZERO_QUANTITY;
@@ -13,9 +17,11 @@ export const makeQuantity = (value: number, unit: Unit): Quantity => {
   return { value, unit };
 };
 
-// Add the given quantities, which can be either positive or negative.
-//
-// If the units have different units, this will throw an assertion error.
+/**
+ * Add the given quantities, which can be either positive or negative.
+ *
+ * If the units have different units, this will throw an assertion error.
+ */
 export const addQuantities = (a: Quantity, b: Quantity): Quantity => {
   if (a.value === 0) {
     return b;

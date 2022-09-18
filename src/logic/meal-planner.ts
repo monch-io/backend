@@ -17,6 +17,9 @@ interface IngredientUsage {
   quantityToPurchase: Quantity;
 }
 
+/**
+ * Contains functionality related to meal plan generation.
+ */
 export class MealPlanner {
   constructor(
     private readonly mealDao: MealDao,
@@ -24,6 +27,19 @@ export class MealPlanner {
     private readonly inventoryManager: InventoryManager
   ) {}
 
+  /**
+   * Make a meal plan for the given dates
+   *
+   * Currently, the meal generation strategy is quite simple:
+   *
+   * - Available recipes are shuffled to add some noise
+   * - Recipes are sorted by their cumulative ingredient usage from inventory.
+   * - Recipes that use more of the existing inventory are ranked higher.
+   * - The first N recipes are selected for N dates given.
+   *
+   * The created meal plan also lists all ingredients that need to be purchased
+   * for all the planned meals.
+   */
   makeMealPlan = async (
     mealDates: Date[]
   ): Promise<MealPlanWithIngredientsNeeded> => {
@@ -120,6 +136,9 @@ export class MealPlanner {
     };
   };
 
+  /**
+   * Accept the given meals by saving them to the database.
+   */
   acceptMealPlan = async (mealPlan: MealPlan): Promise<void> => {
     // @@Todo: transaction
     for (const meal of mealPlan) {
