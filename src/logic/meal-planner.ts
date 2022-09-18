@@ -1,17 +1,20 @@
 import { MealDao } from "../data/dao/meal";
 import { RecipeDao } from "../data/dao/recipe";
 import { MealWithoutId } from "../types/meal";
-import { MealPlan } from "../types/meal-plan";
+import { MealPlan, MealPlanWithIngredientsNeeded } from "../types/meal-plan";
 import { INFINITE_PAGINATION } from "../types/pagination";
 import { QuantifiedIngredientRef } from "../types/quantified-ingredient";
+import { Quantity } from "../types/quantity";
 import { Recipe } from "../types/recipe";
 import { assert, todo } from "../utils/assertions";
+import { LOG } from "../utils/log";
 import { DomainException } from "./domain-exception";
 import { InventoryManager } from "./inventory-manager";
+import { addQuantities, makeQuantity, ZERO_QUANTITY } from "./quantities";
 
 interface IngredientUsage {
-  existingQuantityUsed: number;
-  quantityToPurchase: number;
+  existingQuantityUsed: Quantity;
+  quantityToPurchase: Quantity;
 }
 
 export class MealPlanner {
@@ -21,7 +24,9 @@ export class MealPlanner {
     private readonly inventoryManager: InventoryManager
   ) {}
 
-  makeMealPlan = async (mealDates: Date[]): Promise<MealPlan> => {
+  makeMealPlan = async (
+    mealDates: Date[]
+  ): Promise<MealPlanWithIngredientsNeeded> => {
     todo(this.mealDao, this.recipeDao, this.inventoryManager);
     const inventory = new Map(
       Object.entries(
@@ -35,6 +40,10 @@ export class MealPlanner {
 
     // Map from recipeId to cumulative ingredient usage
     const recipeCumulativeIngredientUsage = new Map<string, number>();
+    const ingredientsNeededByRecipeId = new Map<
+      string,
+      Map<string, Quantity>
+    >();
     for (const recipe of potentialRecipes) {
       const recipeWithIngredients = await this.recipeDao.findById(recipe.id);
       assert(recipeWithIngredients !== null);
@@ -42,9 +51,22 @@ export class MealPlanner {
         inventory,
         recipeWithIngredients
       );
+
+      // Calculate cumulative ingredient usage
       recipeCumulativeIngredientUsage.set(
         recipe.id,
-        this.cumulateIngredientUsage(ingredientUsage)
+        this.calculateCumulativeIngredientUsage(ingredientUsage)
+      );
+
+      // Set ingredients needed
+      ingredientsNeededByRecipeId.set(
+        recipe.id,
+        new Map(
+          Array.from(ingredientUsage.entries()).map(([id, usage]) => [
+            id,
+            usage.quantityToPurchase,
+          ])
+        )
       );
     }
 
@@ -70,11 +92,33 @@ export class MealPlanner {
     }
 
     // Now we just pick the first n recipes mapped to the dates:
-    return mealDates.map((date, i): MealWithoutId => {
+    const plan = mealDates.map((date, i): MealWithoutId => {
       const recipeId = potentialRecipes[i]?.id;
       assert(typeof recipeId !== "undefined");
       return { date, recipeId };
     });
+
+    // Get the ingredients that are needed to be purchased
+    const ingredientsNeeded = new Map<string, Quantity>();
+    for (const recipe of potentialRecipes.slice(0, mealDates.length)) {
+      const ingredientsForRecipe =
+        ingredientsNeededByRecipeId.get(recipe.id) ??
+        new Map<string, Quantity>();
+      for (const [ingredientId, quantity] of ingredientsForRecipe.entries()) {
+        ingredientsNeeded.set(
+          ingredientId,
+          addQuantities(
+            ingredientsNeeded.get(ingredientId) ?? { value: 0 },
+            quantity
+          )
+        );
+      }
+    }
+
+    return {
+      plan,
+      ingredientsNeeded: Object.fromEntries(ingredientsNeeded.entries()),
+    };
   };
 
   acceptMealPlan = async (mealPlan: MealPlan): Promise<void> => {
@@ -90,10 +134,18 @@ export class MealPlanner {
   ): Map<string, IngredientUsage> => {
     // Keep track of how much of each ingredient we need to purchase and how
     // much we can use from inventory
-    const existingIngredientsUtilised = new Map<string, number>();
-    const ingredientsToPurchase = new Map<string, number>();
+    const existingIngredientsUtilised = new Map<string, Quantity>();
+    const ingredientsToPurchase = new Map<string, Quantity>();
 
     for (const recipeQuantifiedIngredient of recipe.ingredients) {
+      if (recipeQuantifiedIngredient.quantity.value === 0) {
+        LOG.warn(
+          `Found 0 quantity for ingredient with ID=${recipeQuantifiedIngredient.ingredientId} in recipe with ID=${recipe.id} during meal planning, skipping`
+        );
+        continue;
+      }
+      assert(typeof recipeQuantifiedIngredient.quantity.unit !== "undefined");
+
       const inventoryQuantifiedIngredient = inventory.get(
         recipeQuantifiedIngredient.ingredientId
       );
@@ -101,7 +153,7 @@ export class MealPlanner {
         // If not in inventory, we need to purchase all the stock
         ingredientsToPurchase.set(
           recipeQuantifiedIngredient.ingredientId,
-          recipeQuantifiedIngredient.quantity.value
+          recipeQuantifiedIngredient.quantity
         );
         continue;
       }
@@ -109,7 +161,6 @@ export class MealPlanner {
       // Ensure quantity units match
       assert(
         inventoryQuantifiedIngredient.quantity.value === 0 ||
-          recipeQuantifiedIngredient.quantity.value === 0 ||
           inventoryQuantifiedIngredient.quantity.unit ===
             recipeQuantifiedIngredient.quantity.unit
       );
@@ -121,7 +172,7 @@ export class MealPlanner {
         // We have enough in inventory, so no need to purchase
         existingIngredientsUtilised.set(
           recipeQuantifiedIngredient.ingredientId,
-          difference
+          makeQuantity(difference, recipeQuantifiedIngredient.quantity.unit)
         );
       } else if (difference < 0) {
         const usedUp = inventoryQuantifiedIngredient.quantity.value;
@@ -131,14 +182,14 @@ export class MealPlanner {
           // Use up what we have in inventory
           existingIngredientsUtilised.set(
             recipeQuantifiedIngredient.ingredientId,
-            usedUp
+            makeQuantity(usedUp, recipeQuantifiedIngredient.quantity.unit)
           );
         }
 
         // Purchase the rest
         ingredientsToPurchase.set(
           recipeQuantifiedIngredient.ingredientId,
-          extraNeeded
+          makeQuantity(extraNeeded, recipeQuantifiedIngredient.quantity.unit)
         );
       }
     }
@@ -150,34 +201,37 @@ export class MealPlanner {
   };
 
   private constructIngredientUsageMap = (
-    existingIngredientsUtilised: Map<string, number>,
-    ingredientsToPurchase: Map<string, number>
+    existingIngredientsUtilised: Map<string, Quantity>,
+    ingredientsToPurchase: Map<string, Quantity>
   ): Map<string, IngredientUsage> => {
     return new Map(
       Array.from(
+        // Keys are all the unique ingredients
         new Set([
           ...existingIngredientsUtilised.keys(),
           ...ingredientsToPurchase.keys(),
         ])
       ).map((ingredientId): [string, IngredientUsage] => {
+        // Values are the quantity to purchase and the quantity to use from inventory
         return [
           ingredientId,
           {
             existingQuantityUsed:
-              existingIngredientsUtilised.get(ingredientId) ?? 0,
-            quantityToPurchase: ingredientsToPurchase.get(ingredientId) ?? 0,
+              existingIngredientsUtilised.get(ingredientId) ?? ZERO_QUANTITY,
+            quantityToPurchase:
+              ingredientsToPurchase.get(ingredientId) ?? ZERO_QUANTITY,
           },
         ];
       })
     );
   };
 
-  private cumulateIngredientUsage = (
+  private calculateCumulativeIngredientUsage = (
     usage: Map<string, IngredientUsage>
   ): number => {
     // @@Refine: We can take into account units to have a better usage estimate.
     return Array.from(usage.values())
       .map((ingredientUsage) => ingredientUsage.existingQuantityUsed)
-      .reduce((a, b) => a + b, 0);
+      .reduce((a, b) => a + b.value, 0);
   };
 }

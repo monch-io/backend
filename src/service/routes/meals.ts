@@ -1,7 +1,7 @@
 import * as trpc from "@trpc/server";
 import { z } from "zod";
 import { CreateMeal, Meal } from "../../types/meal";
-import { MealPlan } from "../../types/meal-plan";
+import { MealPlan, MealPlanWithIngredientsNeeded } from "../../types/meal-plan";
 import { MealSearchQuery } from "../../types/meal-search-query";
 import { PaginatedResult, Pagination } from "../../types/pagination";
 import { Context } from "../context";
@@ -65,7 +65,7 @@ export const mealsRouter = trpc
     input: z.object({
       mealDates: z.date().array(),
     }),
-    output: MealPlan,
+    output: MealPlanWithIngredientsNeeded,
     resolve: async ({
       input,
       ctx: {
