@@ -19,6 +19,10 @@ export class UnexpectedException extends Exception {
   toTRPCError = () => this.toTRPCErrorWithCode("INTERNAL_SERVER_ERROR");
 }
 
+export class BrokenInvariantException extends Exception {
+  toTRPCError = () => this.toTRPCErrorWithCode("INTERNAL_SERVER_ERROR");
+}
+
 export class NotFoundException extends Exception {
   toTRPCError = () => this.toTRPCErrorWithCode("NOT_FOUND");
 }

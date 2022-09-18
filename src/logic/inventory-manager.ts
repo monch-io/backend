@@ -3,7 +3,7 @@ import { IngredientDao } from "../data/dao/ingredient";
 import { InventoryChangeDao } from "../data/dao/inventory-change";
 import { InventoryEntryDao } from "../data/dao/inventory-entry";
 import { DateRange } from "../types/date-range";
-import { Inventory } from "../types/inventory";
+import { Inventory, InventoryWithDetails } from "../types/inventory";
 import { InventoryChange } from "../types/inventory-change";
 import { InventoryEntry } from "../types/inventory-entry";
 import {
@@ -11,9 +11,16 @@ import {
   PaginatedResult,
   Pagination,
 } from "../types/pagination";
-import { QuantifiedIngredientRef } from "../types/quantified-ingredient";
+import {
+  QuantifiedIngredient,
+  QuantifiedIngredientRef,
+} from "../types/quantified-ingredient";
 import { Unit } from "../types/unit";
-import { BadRequestException, NotFoundException } from "../utils/exceptions";
+import {
+  BadRequestException,
+  BrokenInvariantException,
+  NotFoundException,
+} from "../utils/exceptions";
 import { LOG } from "../utils/log";
 
 type InventoryEntryOptionalId = Omit<InventoryEntry, "id"> & {
@@ -30,26 +37,33 @@ export class InventoryManager {
 
   // Get the current inventory, which is for each ingredient
   getInventory = async (): Promise<Inventory> => {
-    const entriesByIngredientId = new Map<string, QuantifiedIngredientRef>();
-    const inventoryEntries = await this.inventoryEntryDao.search(
-      {},
-      INFINITE_PAGINATION
-    );
+    const entriesByIngredientId =
+      await this.getInventoryMapped<QuantifiedIngredientRef>(
+        async (data) => data
+      );
+    return { entriesByIngredientId };
+  };
 
-    for (const { data } of inventoryEntries.items) {
-      if (entriesByIngredientId.has(data.ingredientId)) {
-        LOG.warn(
-          `Found ingredient with id=${data.ingredientId} in inventory multiple times! Results might be incorrect.`
-        );
-      }
-      entriesByIngredientId.set(data.ingredientId, data);
-    }
+  // Get the current inventory, which is for each ingredient
+  //
+  // This includes the details of the inventory entry, specifically ingredient
+  // details such as name.
+  getInventoryWithDetails = async (): Promise<InventoryWithDetails> => {
+    const entriesByIngredientId =
+      await this.getInventoryMapped<QuantifiedIngredient>(async (data) => {
+        const ingredient = await this.ingredientDao.findById(data.ingredientId);
+        if (ingredient === null) {
+          throw new BrokenInvariantException(
+            `Ingredient with ID=${data.ingredientId} not found in inventory`
+          );
+        }
 
-    return {
-      entriesByIngredientId: Object.fromEntries(
-        entriesByIngredientId.entries()
-      ),
-    };
+        return {
+          ingredient,
+          quantity: data.quantity,
+        };
+      });
+    return { entriesByIngredientId };
   };
 
   // Get the quantity of a specific ingredient in the inventory
@@ -100,6 +114,28 @@ export class InventoryManager {
       { ingredientIds, dateRange },
       pagination
     );
+  };
+
+  private getInventoryMapped = async <T>(
+    entryMap: (entry: QuantifiedIngredientRef) => Promise<T>
+  ): Promise<Record<string, T>> => {
+    const entriesByIngredientId = new Map<string, T>();
+    const inventoryEntries = await this.inventoryEntryDao.search(
+      {},
+      INFINITE_PAGINATION
+    );
+
+    for (const { data } of inventoryEntries.items) {
+      if (entriesByIngredientId.has(data.ingredientId)) {
+        LOG.warn(
+          `Found ingredient with id=${data.ingredientId} in inventory multiple times! Results might be incorrect.`
+        );
+      }
+
+      entriesByIngredientId.set(data.ingredientId, await entryMap(data));
+    }
+
+    return Object.fromEntries(entriesByIngredientId.entries());
   };
 
   private updateInventoryInMode = async (
