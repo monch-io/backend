@@ -29,7 +29,7 @@ export class MealPlanner {
       )
     );
 
-    const potentialRecipes = await this.recipeDao
+    let potentialRecipes = await this.recipeDao
       .search({}, INFINITE_PAGINATION)
       .then(({ items }) => items);
 
@@ -47,6 +47,12 @@ export class MealPlanner {
         this.cumulateIngredientUsage(ingredientUsage)
       );
     }
+
+    // First shuffle recipes to add some noise
+    potentialRecipes = potentialRecipes
+      .map((value) => ({ value, sort: Math.random() }))
+      .sort((a, b) => a.sort - b.sort)
+      .map(({ value }) => value);
 
     // Sort recipes descending by cumulative ingredient usage
     potentialRecipes.sort(
