@@ -243,6 +243,9 @@ export class InventoryManager {
         // Create the first inventory entry for this ingredient if it doesn't
         // exist.
         await this.inventoryEntryDao.create(inventoryEntry.data);
+      } else if (inventoryEntry.data.quantity.value === 0) {
+        // Delete the inventory entry if the quantity is 0.
+        await this.inventoryEntryDao.delete(inventoryEntry.id);
       } else {
         // Update existing entry otherwise.
         await this.inventoryEntryDao.update(
