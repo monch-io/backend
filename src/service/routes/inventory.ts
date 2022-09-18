@@ -1,7 +1,7 @@
 import * as trpc from "@trpc/server";
 import { z } from "zod";
 import { DateRange } from "../../types/date-range";
-import { Inventory } from "../../types/inventory";
+import { Inventory, InventoryWithDetails } from "../../types/inventory";
 import { InventoryChange } from "../../types/inventory-change";
 import { PaginatedResult, Pagination } from "../../types/pagination";
 import { QuantifiedIngredientRef } from "../../types/quantified-ingredient";
@@ -18,6 +18,17 @@ export const inventoryRouter = trpc
       },
     }) => {
       return await inventoryManager.getInventory();
+    },
+  })
+  .query("getInventoryWithDetails", {
+    input: z.object({}),
+    output: InventoryWithDetails,
+    resolve: async ({
+      ctx: {
+        logic: { inventoryManager },
+      },
+    }) => {
+      return await inventoryManager.getInventoryWithDetails();
     },
   })
   .query("getQuantityForIngredient", {
