@@ -1,6 +1,7 @@
 import * as trpc from "@trpc/server";
 import { z } from "zod";
 import { CreateMeal, Meal } from "../../types/meal";
+import { MealPlan, MealPlanWithIngredientsNeeded } from "../../types/meal-plan";
 import { MealSearchQuery } from "../../types/meal-search-query";
 import { PaginatedResult, Pagination } from "../../types/pagination";
 import { Context } from "../context";
@@ -58,5 +59,33 @@ export const mealsRouter = trpc
       },
     }) => {
       return await mealDao.delete(input.id);
+    },
+  })
+  .mutation("makeMealPlan", {
+    input: z.object({
+      mealDates: z.date().array(),
+    }),
+    output: MealPlanWithIngredientsNeeded,
+    resolve: async ({
+      input,
+      ctx: {
+        logic: { mealPlanner },
+      },
+    }) => {
+      return await mealPlanner.makeMealPlan(input.mealDates);
+    },
+  })
+  .mutation("acceptMealPlan", {
+    input: z.object({
+      mealPlan: MealPlan,
+    }),
+    output: z.void(),
+    resolve: async ({
+      input,
+      ctx: {
+        logic: { mealPlanner },
+      },
+    }) => {
+      return await mealPlanner.acceptMealPlan(input.mealPlan);
     },
   });

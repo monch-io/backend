@@ -6,11 +6,15 @@ export type Dimension = z.infer<typeof Dimension>;
 export const AmountUnit = z.enum(["piece"]);
 export type AmountUnit = z.infer<typeof AmountUnit>;
 
-export const WeightUnit = z.enum(["g", "kg"]);
+export const WeightUnit = z.enum(["kg"]);
 export type WeightUnit = z.infer<typeof WeightUnit>;
 
-export const VolumeUnit = z.enum(["ml", "l"]);
+export const VolumeUnit = z.enum(["l"]);
 export type VolumeUnit = z.infer<typeof VolumeUnit>;
 
-export const Unit = z.union([AmountUnit, WeightUnit, VolumeUnit]);
+export const Unit = z.enum([
+  ...AmountUnit.options,
+  ...WeightUnit.options,
+  ...VolumeUnit.options,
+]);
 export type Unit = z.infer<typeof Unit>;

@@ -31,6 +31,9 @@ export const startService = async (
       trpcApiEndpoint: API_ENDPOINT,
       playgroundEndpoint: API_PLAYGROUND_ENDPOINT,
       router: appRouter,
+      request: {
+        superjson: true,
+      },
     })
   );
 
