@@ -7,8 +7,11 @@ export const Meal = z.object({
 });
 export interface Meal extends z.infer<typeof Meal> {}
 
-export const CreateMeal = z.object({
+export const MealWithoutId = z.object({
   date: z.date(),
   recipeId: z.string(),
 });
+export interface MealWithoutId extends z.infer<typeof MealWithoutId> {}
+
+export const CreateMeal = MealWithoutId;
 export interface CreateMeal extends z.infer<typeof CreateMeal> {}
