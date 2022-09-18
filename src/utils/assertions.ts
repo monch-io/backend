@@ -21,3 +21,13 @@ export const assertConforms = <T extends z.ZodTypeAny>(
   }
   return result.data;
 };
+
+// Assert that the given condition is met.
+export function assert(
+  condition: boolean,
+  message?: string
+): asserts condition {
+  if (condition) {
+    throw new Error(`Assertion failed${message && `: ${message}`}`);
+  }
+}

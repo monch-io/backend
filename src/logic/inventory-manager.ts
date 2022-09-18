@@ -1,4 +1,3 @@
-import { assert } from "console";
 import { IngredientDao } from "../data/dao/ingredient";
 import { InventoryChangeDao } from "../data/dao/inventory-change";
 import { InventoryEntryDao } from "../data/dao/inventory-entry";
@@ -16,11 +15,8 @@ import {
   QuantifiedIngredientRef,
 } from "../types/quantified-ingredient";
 import { Unit } from "../types/unit";
-import {
-  BadRequestException,
-  BrokenInvariantException,
-  NotFoundException,
-} from "../utils/exceptions";
+import { assert } from "../utils/assertions";
+import { BadRequestException, NotFoundException } from "../utils/exceptions";
 import { LOG } from "../utils/log";
 
 type InventoryEntryOptionalId = Omit<InventoryEntry, "id"> & {
@@ -52,12 +48,7 @@ export class InventoryManager {
     const entriesByIngredientId =
       await this.getInventoryMapped<QuantifiedIngredient>(async (data) => {
         const ingredient = await this.ingredientDao.findById(data.ingredientId);
-        if (ingredient === null) {
-          throw new BrokenInvariantException(
-            `Ingredient with ID=${data.ingredientId} not found in inventory`
-          );
-        }
-
+        assert(ingredient !== null);
         return {
           ingredient,
           quantity: data.quantity,
