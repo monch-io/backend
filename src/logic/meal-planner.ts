@@ -6,7 +6,7 @@ import { INFINITE_PAGINATION } from "../types/pagination";
 import { QuantifiedIngredientRef } from "../types/quantified-ingredient";
 import { Quantity } from "../types/quantity";
 import { Recipe } from "../types/recipe";
-import { assert, todo } from "../utils/assertions";
+import { assert } from "../utils/assertions";
 import { LOG } from "../utils/log";
 import { DomainException } from "./domain-exception";
 import { InventoryManager } from "./inventory-manager";
@@ -27,7 +27,6 @@ export class MealPlanner {
   makeMealPlan = async (
     mealDates: Date[]
   ): Promise<MealPlanWithIngredientsNeeded> => {
-    todo(this.mealDao, this.recipeDao, this.inventoryManager);
     const inventory = new Map(
       Object.entries(
         (await this.inventoryManager.getInventory()).entriesByIngredientId
